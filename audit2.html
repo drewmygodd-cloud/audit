@@ -14,33 +14,31 @@
       body { background: none; padding: 0; }
       .page { width: 100%; box-shadow: none; margin: 0; padding: 15mm; height: auto; }
       .no-print { display: none !important; }
-      /* TOTO ZAŘÍDÍ SKRYTÍ NÁPOVĚDY PŘI TISKU */
       .only-screen { display: none !important; }
       .page-break { page-break-before: always; }
     }
 
     /* Hlavička */
-    .header { border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-start; /* Změna na flex-start pro lepší zarovnání nahoře */ }
+    .header { border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-start; }
     .header-left { display: flex; flex-direction: column; }
     .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
     
-    /* --- ÚPRAVA LOGA --- */
     .logo-img { 
-        height: 90px; /* ZVĚTŠENO z 50px */
-        width: auto;  /* Aby se nedeformovalo */
+        height: 90px; 
+        width: auto;
         max-width: 300px;
         object-fit: contain; 
-        margin-bottom: 15px; /* Větší mezera pod logem */
-        margin-left: 0; /* Jistota zarovnání doleva */
+        margin-bottom: 15px; 
+        margin-left: 0;
         display: block;
-        align-self: flex-start; /* Zarovnání vlevo v rámci kontejneru */
+        align-self: flex-start;
     }
 
     .score-box { background: #f4f4f4; border-left: 5px solid #333; padding: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
     .value-container { text-align: right; }
+    /* BARVA SKÓRE - VŽDY TMVAVÁ */
     .value { font-size: 36px; font-weight: bold; color: #2c3e50; }
     
-    /* Trend */
     .trend { font-size: 16px; font-weight: normal; margin-top: 5px; }
     .trend-up { color: #27ae60; }
     .trend-down { color: #c0392b; }
@@ -69,7 +67,8 @@
             <small>Výroční hodnocení kvality</small>
         </div>
       </div>
-      <div style="text-align: right; margin-top: 10px;"> Období: <span id="auditYear" style="font-weight:bold;">---</span><br>
+      <div style="text-align: right; margin-top: 10px;">
+        Období: <span id="auditYear" style="font-weight:bold;">---</span><br>
         Datum tisku: <span id="currentDate"></span>
       </div>
     </div>
@@ -151,27 +150,21 @@
       document.getElementById('supName').innerText = mapped.NameCol || "---";
       document.getElementById('auditYear').innerText = mapped.YearCol || "---";
       
-      // --- POZNÁMKA (Nápověda zmizí při tisku) ---
       const noteEl = document.getElementById('managerNote');
       if (mapped.NoteCol && mapped.NoteCol.trim() !== "") {
           noteEl.innerText = mapped.NoteCol;
           noteEl.style.fontStyle = "normal";
           noteEl.style.color = "#000";
       } else {
-          // Tato nápověda má třídu 'only-screen' a při tisku se skryje
           noteEl.innerHTML = '<span class="only-screen">(Zde bude prostor pro ruční poznámky po vytištění...)</span>';
           noteEl.style.fontStyle = "italic";
           noteEl.style.color = "#aaa";
       }
-      // -------------------------------------
 
+      // Bez barevného semaforu
       const scoreEl = document.getElementById('totalScore');
-      const val = mapped.TotalCol;
-      scoreEl.innerText = formatPercent(val);
-      
-      if (val >= 0.90) scoreEl.style.color = '#27ae60';
-      else if (val >= 0.75) scoreEl.style.color = '#f39c12';
-      else scoreEl.style.color = '#c0392b';
+      scoreEl.innerText = formatPercent(mapped.TotalCol);
+      // Barvu necháváme výchozí (CSS .value)
 
       document.getElementById('hardData').innerText = formatPercent(mapped.HardCol);
       document.getElementById('softEnv').innerText = formatPercent(mapped.EnvCol);
