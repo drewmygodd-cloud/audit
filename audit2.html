@@ -20,10 +20,21 @@
     }
 
     /* Hlavička */
-    .header { border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+    .header { border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-start; /* Změna na flex-start pro lepší zarovnání nahoře */ }
     .header-left { display: flex; flex-direction: column; }
     .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
-    .logo-img { height: 50px; max-width: 200px; object-fit: contain; margin-bottom: 5px; }
+    
+    /* --- ÚPRAVA LOGA --- */
+    .logo-img { 
+        height: 90px; /* ZVĚTŠENO z 50px */
+        width: auto;  /* Aby se nedeformovalo */
+        max-width: 300px;
+        object-fit: contain; 
+        margin-bottom: 15px; /* Větší mezera pod logem */
+        margin-left: 0; /* Jistota zarovnání doleva */
+        display: block;
+        align-self: flex-start; /* Zarovnání vlevo v rámci kontejneru */
+    }
 
     .score-box { background: #f4f4f4; border-left: 5px solid #333; padding: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
     .value-container { text-align: right; }
@@ -58,8 +69,7 @@
             <small>Výroční hodnocení kvality</small>
         </div>
       </div>
-      <div style="text-align: right;">
-        Období: <span id="auditYear" style="font-weight:bold;">---</span><br>
+      <div style="text-align: right; margin-top: 10px;"> Období: <span id="auditYear" style="font-weight:bold;">---</span><br>
         Datum tisku: <span id="currentDate"></span>
       </div>
     </div>
@@ -124,4 +134,95 @@
         { name: "TotalCol", title: "Celkové Skóre", type: 'Numeric'},
         { name: "HardCol", title: "Hard Data", type: 'Numeric'},
         { name: "EnvCol", title: "Environment", type: 'Numeric'},
-        { name: "CommCol", title: "Komunikace", type: 'Numeric
+        { name: "CommCol", title: "Komunikace", type: 'Numeric'},
+        { name: "ServCol", title: "Servis", type: 'Numeric'},
+        { name: "ChartData", title: "Graf JSON", type: 'Text'},
+        { name: "DelayData", title: "Zpoždění JSON", type: 'Text'},
+        { name: "TrendCol", title: "Rozdíl Vloni (+/-)", type: 'Numeric'},
+        { name: "NoteCol", title: "Slovní hodnocení", type: 'Text'}
+      ],
+      requiredAccess: 'read table'
+    });
+
+    grist.onRecord(function(record, mappings) {
+      if (!record) return;
+      const mapped = grist.mapColumnNames(record) || record;
+
+      document.getElementById('supName').innerText = mapped.NameCol || "---";
+      document.getElementById('auditYear').innerText = mapped.YearCol || "---";
+      
+      // --- POZNÁMKA (Nápověda zmizí při tisku) ---
+      const noteEl = document.getElementById('managerNote');
+      if (mapped.NoteCol && mapped.NoteCol.trim() !== "") {
+          noteEl.innerText = mapped.NoteCol;
+          noteEl.style.fontStyle = "normal";
+          noteEl.style.color = "#000";
+      } else {
+          // Tato nápověda má třídu 'only-screen' a při tisku se skryje
+          noteEl.innerHTML = '<span class="only-screen">(Zde bude prostor pro ruční poznámky po vytištění...)</span>';
+          noteEl.style.fontStyle = "italic";
+          noteEl.style.color = "#aaa";
+      }
+      // -------------------------------------
+
+      const scoreEl = document.getElementById('totalScore');
+      const val = mapped.TotalCol;
+      scoreEl.innerText = formatPercent(val);
+      
+      if (val >= 0.90) scoreEl.style.color = '#27ae60';
+      else if (val >= 0.75) scoreEl.style.color = '#f39c12';
+      else scoreEl.style.color = '#c0392b';
+
+      document.getElementById('hardData').innerText = formatPercent(mapped.HardCol);
+      document.getElementById('softEnv').innerText = formatPercent(mapped.EnvCol);
+      document.getElementById('softComm').innerText = formatPercent(mapped.CommCol);
+      document.getElementById('softServ').innerText = formatPercent(mapped.ServCol);
+      
+      const e = Number(mapped.EnvCol)||0; const c = Number(mapped.CommCol)||0; const s = Number(mapped.ServCol)||0;
+      document.getElementById('softAvg').innerText = formatPercent((e+c+s)/3);
+
+      const trendEl = document.getElementById('trendDisplay');
+      const trendVal = mapped.TrendCol;
+      if (trendVal !== null && trendVal !== undefined && typeof trendVal === 'number') {
+          const percentDiff = (trendVal * 100).toFixed(1);
+          if (trendVal > 0.001) trendEl.innerHTML = `<span class="trend-up">↗ +${percentDiff} %</span> oproti loňsku`;
+          else if (trendVal < -0.001) trendEl.innerHTML = `<span class="trend-down">↘ ${percentDiff} %</span> oproti loňsku`;
+          else trendEl.innerHTML = `<span class="trend-neutral">➡ beze změny</span>`;
+      } else {
+          trendEl.innerText = "";
+      }
+
+      try {
+        let cData = {Q1:0, Q2:0, Q3:0, Q4:0};
+        if (mapped.ChartData && mapped.ChartData !== "null") cData = JSON.parse(mapped.ChartData);
+        const ctx = document.getElementById('quarterChart').getContext('2d');
+        if (myChart) myChart.destroy();
+        myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                datasets: [{ label: 'Výkon', data: [cData.Q1*100, cData.Q2*100, cData.Q3*100, cData.Q4*100], backgroundColor: '#3498db' }]
+            },
+            options: { scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+      } catch (e) {}
+
+      try {
+        const tbody = document.getElementById('delayTableBody');
+        tbody.innerHTML = "";
+        let delays = mapped.DelayData ? JSON.parse(mapped.DelayData) : [];
+        if (!delays || delays.length === 0) {
+            document.getElementById('delayTable').style.display = 'none';
+            document.getElementById('noDelaysMsg').style.display = 'block';
+        } else {
+            document.getElementById('delayTable').style.display = 'table';
+            document.getElementById('noDelaysMsg').style.display = 'none';
+            delays.forEach(d => {
+                tbody.innerHTML += `<tr class="delay-row"><td>${d.datum}</td><td>${d.cislo}</td><td>${d.dny} dnů</td><td>${d.duvod}</td></tr>`;
+            });
+        }
+      } catch (e) {}
+    });
+  </script>
+</body>
+</html>
