@@ -6,7 +6,7 @@
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* STYLY (Zůstávají stejné, jen drobné úpravy pro logo a trend) */
+    /* ZÁKLADNÍ STYLY */
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f0f0; margin: 0; padding: 20px; color: #333; }
     .page { background: white; width: 210mm; min-height: 297mm; margin: 0 auto 20px auto; padding: 20mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); box-sizing: border-box; }
     
@@ -14,23 +14,25 @@
       body { background: none; padding: 0; }
       .page { width: 100%; box-shadow: none; margin: 0; padding: 15mm; height: auto; }
       .no-print { display: none !important; }
+      /* TOTO ZAŘÍDÍ SKRYTÍ NÁPOVĚDY PŘI TISKU */
+      .only-screen { display: none !important; }
       .page-break { page-break-before: always; }
     }
 
-    /* Hlavička s logem */
+    /* Hlavička */
     .header { border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
     .header-left { display: flex; flex-direction: column; }
     .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
-    .logo-img { height: 50px; max-width: 200px; object-fit: contain; } /* Nastavení velikosti loga */
+    .logo-img { height: 50px; max-width: 200px; object-fit: contain; margin-bottom: 5px; }
 
     .score-box { background: #f4f4f4; border-left: 5px solid #333; padding: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
     .value-container { text-align: right; }
     .value { font-size: 36px; font-weight: bold; color: #2c3e50; }
     
-    /* Styl pro Trend */
+    /* Trend */
     .trend { font-size: 16px; font-weight: normal; margin-top: 5px; }
-    .trend-up { color: #27ae60; }   /* Zelená pro zlepšení */
-    .trend-down { color: #c0392b; } /* Červená pro zhoršení */
+    .trend-up { color: #27ae60; }
+    .trend-down { color: #c0392b; }
     .trend-neutral { color: #7f8c8d; }
 
     table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
@@ -50,8 +52,8 @@
   <div class="page">
     <div class="header">
       <div class="header-left">
-        <img src="https://www.streicher.cz/fileadmin/Vorlage/images/logo.png" alt="Logo" class="logo-img" id="companyLogo">
-        <div style="margin-top:10px;">
+        <img src="https://www.streicher.cz/fileadmin/Vorlage/images/logo.png" alt="Logo STREICHER" class="logo-img" id="companyLogo">
+        <div>
             <h1>Audit Dodavatele</h1>
             <small>Výroční hodnocení kvality</small>
         </div>
@@ -83,10 +85,9 @@
       <tr style="background:#eee;"><td><em>Průměr měkkých kritérií</em></td><td class="num" id="softAvg">0 %</td></tr>
     </table>
     
-    <h3>📝 Závěr</h3>
-    <div id="managerNote" style="border: 1px solid #ddd; height: 120px; padding: 10px; font-style: italic; color: #555;">
-      (Zde bude prostor pro ruční poznámky po vytištění, nebo text z Gristu...)
-    </div>
+    <h3>📝 Závěr a slovní hodnocení</h3>
+    <div id="managerNote" style="border: 1px solid #ddd; min-height: 120px; padding: 10px; font-style: italic; color: #555;">
+      </div>
 
     <div style="margin-top: 50px; border-top: 1px solid #ddd; padding-top: 20px; display: flex; justify-content: space-between;">
         <div style="text-align:center; width:40%; border-top:1px solid #000; padding-top:5px;">Dodavatel</div>
@@ -123,93 +124,4 @@
         { name: "TotalCol", title: "Celkové Skóre", type: 'Numeric'},
         { name: "HardCol", title: "Hard Data", type: 'Numeric'},
         { name: "EnvCol", title: "Environment", type: 'Numeric'},
-        { name: "CommCol", title: "Komunikace", type: 'Numeric'},
-        { name: "ServCol", title: "Servis", type: 'Numeric'},
-        { name: "ChartData", title: "Graf JSON", type: 'Text'},
-        { name: "DelayData", title: "Zpoždění JSON", type: 'Text'},
-        // NOVÝ SLOUPEC PRO TREND
-        { name: "TrendCol", title: "Rozdíl Vloni (+/-)", type: 'Numeric'},
-        // NOVÝ SLOUPEC PRO POZNÁMKU (pokud se rozhodnete ji psát v Gristu)
-        { name: "NoteCol", title: "Slovní hodnocení", type: 'Text'}
-      ],
-      requiredAccess: 'read table'
-    });
-
-    grist.onRecord(function(record, mappings) {
-      if (!record) return;
-      const mapped = grist.mapColumnNames(record) || record;
-
-      // 1. TEXTY
-      document.getElementById('supName').innerText = mapped.NameCol || "---";
-      document.getElementById('auditYear').innerText = mapped.YearCol || "---";
-      
-      // Poznámka (Pokud je v Gristu prázdná, necháme tam ten placeholder text)
-      if (mapped.NoteCol) {
-          document.getElementById('managerNote').innerText = mapped.NoteCol;
-          document.getElementById('managerNote').style.fontStyle = "normal";
-          document.getElementById('managerNote').style.color = "#000";
-      }
-
-      // 2. ČÍSLA
-      document.getElementById('totalScore').innerText = formatPercent(mapped.TotalCol);
-      document.getElementById('hardData').innerText = formatPercent(mapped.HardCol);
-      document.getElementById('softEnv').innerText = formatPercent(mapped.EnvCol);
-      document.getElementById('softComm').innerText = formatPercent(mapped.CommCol);
-      document.getElementById('softServ').innerText = formatPercent(mapped.ServCol);
-      
-      const e = Number(mapped.EnvCol)||0; const c = Number(mapped.CommCol)||0; const s = Number(mapped.ServCol)||0;
-      document.getElementById('softAvg').innerText = formatPercent((e+c+s)/3);
-
-      // 3. LOGIKA TRENDU
-      const trendEl = document.getElementById('trendDisplay');
-      const trendVal = mapped.TrendCol;
-
-      if (trendVal !== null && trendVal !== undefined && typeof trendVal === 'number') {
-          const percentDiff = (trendVal * 100).toFixed(1);
-          if (trendVal > 0.001) {
-              trendEl.innerHTML = `<span class="trend-up">↗ +${percentDiff} %</span> oproti loňsku`;
-          } else if (trendVal < -0.001) {
-              trendEl.innerHTML = `<span class="trend-down">↘ ${percentDiff} %</span> oproti loňsku`;
-          } else {
-              trendEl.innerHTML = `<span class="trend-neutral">➡ beze změny</span>`;
-          }
-      } else {
-          trendEl.innerText = ""; // Žádná data z loňska = prázdno
-      }
-
-      // 4. GRAF + TABULKA (Zbytek kódu stejný jako minule...)
-      try {
-        let cData = {Q1:0, Q2:0, Q3:0, Q4:0};
-        if (mapped.ChartData && mapped.ChartData !== "null") cData = JSON.parse(mapped.ChartData);
-        
-        const ctx = document.getElementById('quarterChart').getContext('2d');
-        if (myChart) myChart.destroy();
-        myChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Q1', 'Q2', 'Q3', 'Q4'],
-                datasets: [{ label: 'Výkon', data: [cData.Q1*100, cData.Q2*100, cData.Q3*100, cData.Q4*100], backgroundColor: '#3498db' }]
-            },
-            options: { scales: { y: { beginAtZero: true, max: 100 } } }
-        });
-      } catch (e) {}
-
-      try {
-        const tbody = document.getElementById('delayTableBody');
-        tbody.innerHTML = "";
-        let delays = mapped.DelayData ? JSON.parse(mapped.DelayData) : [];
-        if (!delays || delays.length === 0) {
-            document.getElementById('delayTable').style.display = 'none';
-            document.getElementById('noDelaysMsg').style.display = 'block';
-        } else {
-            document.getElementById('delayTable').style.display = 'table';
-            document.getElementById('noDelaysMsg').style.display = 'none';
-            delays.forEach(d => {
-                tbody.innerHTML += `<tr class="delay-row"><td>${d.datum}</td><td>${d.cislo}</td><td>${d.dny} dnů</td><td>${d.duvod}</td></tr>`;
-            });
-        }
-      } catch (e) {}
-    });
-  </script>
-</body>
-</html>
+        { name: "CommCol", title: "Komunikace", type: 'Numeric
