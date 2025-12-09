@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <title>Audit Dodavatele</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* STYLY (Zůstávají stejné, jen drobné úpravy pro logo a trend) */
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f0f0; margin: 0; padding: 20px; color: #333; }
+    .page { background: white; width: 210mm; min-height: 297mm; margin: 0 auto 20px auto; padding: 20mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); box-sizing: border-box; }
+    
+    @media print {
+      body { background: none; padding: 0; }
+      .page { width: 100%; box-shadow: none; margin: 0; padding: 15mm; height: auto; }
+      .no-print { display: none !important; }
+      .page-break { page-break-before: always; }
+    }
+
+    /* Hlavička s logem */
+    .header { border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+    .header-left { display: flex; flex-direction: column; }
+    .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
+    .logo-img { height: 50px; max-width: 200px; object-fit: contain; } /* Nastavení velikosti loga */
+
+    .score-box { background: #f4f4f4; border-left: 5px solid #333; padding: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+    .value-container { text-align: right; }
+    .value { font-size: 36px; font-weight: bold; color: #2c3e50; }
+    
+    /* Styl pro Trend */
+    .trend { font-size: 16px; font-weight: normal; margin-top: 5px; }
+    .trend-up { color: #27ae60; }   /* Zelená pro zlepšení */
+    .trend-down { color: #c0392b; } /* Červená pro zhoršení */
+    .trend-neutral { color: #7f8c8d; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f9f9f9; }
+    td.num { text-align: right; font-weight: bold; }
+    .delay-row td { color: #c0392b; }
+    
+    .btn-print { display: block; width: 100%; max-width: 200px; margin: 0 auto 20px auto; padding: 10px; background: #333; color: white; text-align: center; cursor: pointer; border-radius: 5px; }
+    .chart-container { position: relative; height: 300px; width: 100%; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+  <div class="no-print btn-print" onclick="window.print()">🖨️ Vytisknout Audit</div>
+
+  <div class="page">
+    <div class="header">
+      <div class="header-left">
+        <img src="https://www.streicher.cz/fileadmin/Vorlage/images/logo.png" alt="Logo" class="logo-img" id="companyLogo">
+        <div style="margin-top:10px;">
+            <h1>Audit Dodavatele</h1>
+            <small>Výroční hodnocení kvality</small>
+        </div>
+      </div>
+      <div style="text-align: right;">
+        Období: <span id="auditYear" style="font-weight:bold;">---</span><br>
+        Datum tisku: <span id="currentDate"></span>
+      </div>
+    </div>
+    
+    <div style="margin-bottom: 20px; font-size: 1.1em;">
+      <strong>Dodavatel:</strong> <span id="supName" style="font-size: 1.3em; margin-left: 10px;">---</span>
+    </div>
+
+    <div class="score-box">
+      <div><span style="font-size: 14px; color: #666; text-transform: uppercase;">Celkové skóre</span></div>
+      <div class="value-container">
+        <div class="value" id="totalScore">0 %</div>
+        <div id="trendDisplay" class="trend"></div>
+      </div>
+    </div>
+
+    <h3>📊 Výsledky</h3>
+    <table>
+      <tr><td><strong>KPI (Hard Data)</strong></td><td class="num" id="hardData">0 %</td></tr>
+      <tr><td><strong>Environment</strong></td><td class="num" id="softEnv">0 %</td></tr>
+      <tr><td><strong>Komunikace</strong></td><td class="num" id="softComm">0 %</td></tr>
+      <tr><td><strong>Servis</strong></td><td class="num" id="softServ">0 %</td></tr>
+      <tr style="background:#eee;"><td><em>Průměr měkkých kritérií</em></td><td class="num" id="softAvg">0 %</td></tr>
+    </table>
+    
+    <h3>📝 Závěr</h3>
+    <div id="managerNote" style="border: 1px solid #ddd; height: 120px; padding: 10px; font-style: italic; color: #555;">
+      (Zde bude prostor pro ruční poznámky po vytištění, nebo text z Gristu...)
+    </div>
+
+    <div style="margin-top: 50px; border-top: 1px solid #ddd; padding-top: 20px; display: flex; justify-content: space-between;">
+        <div style="text-align:center; width:40%; border-top:1px solid #000; padding-top:5px;">Dodavatel</div>
+        <div style="text-align:center; width:40%; border-top:1px solid #000; padding-top:5px;">Auditor</div>
+    </div>
+  </div>
+
+  <div class="page page-break">
+    <div class="header"><div><h1>Příloha</h1></div></div>
+    <h3>📈 Vývoj v čase</h3>
+    <div class="chart-container"><canvas id="quarterChart"></canvas></div>
+    <h3>⚠️ Zpožděné objednávky</h3>
+    <table id="delayTable">
+      <thead><tr><th>Datum</th><th>Číslo</th><th>Dnů</th><th>Důvod</th></tr></thead>
+      <tbody id="delayTableBody"></tbody>
+    </table>
+    <div id="noDelaysMsg" style="display:none; padding:20px; text-align:center; color:green;">✅ Žádné zpoždění.</div>
+  </div>
+
+  <script>
+    function formatPercent(val) {
+      if (val === null || val === undefined || val === "") return "---";
+      if (typeof val === 'number') return (val * 100).toFixed(1) + " %";
+      return val;
+    }
+    
+    document.getElementById('currentDate').innerText = new Date().toLocaleDateString('cs-CZ');
+    let myChart = null;
+
+    grist.ready({
+      columns: [
+        { name: "NameCol", title: "Dodavatel", type: 'Text'},
+        { name: "YearCol", title: "Rok", type: 'Int'},
+        { name: "TotalCol", title: "Celkové Skóre", type: 'Numeric'},
+        { name: "HardCol", title: "Hard Data", type: 'Numeric'},
+        { name: "EnvCol", title: "Environment", type: 'Numeric'},
+        { name: "CommCol", title: "Komunikace", type: 'Numeric'},
+        { name: "ServCol", title: "Servis", type: 'Numeric'},
+        { name: "ChartData", title: "Graf JSON", type: 'Text'},
+        { name: "DelayData", title: "Zpoždění JSON", type: 'Text'},
+        // NOVÝ SLOUPEC PRO TREND
+        { name: "TrendCol", title: "Rozdíl Vloni (+/-)", type: 'Numeric'},
+        // NOVÝ SLOUPEC PRO POZNÁMKU (pokud se rozhodnete ji psát v Gristu)
+        { name: "NoteCol", title: "Slovní hodnocení", type: 'Text'}
+      ],
+      requiredAccess: 'read table'
+    });
+
+    grist.onRecord(function(record, mappings) {
+      if (!record) return;
+      const mapped = grist.mapColumnNames(record) || record;
+
+      // 1. TEXTY
+      document.getElementById('supName').innerText = mapped.NameCol || "---";
+      document.getElementById('auditYear').innerText = mapped.YearCol || "---";
+      
+      // Poznámka (Pokud je v Gristu prázdná, necháme tam ten placeholder text)
+      if (mapped.NoteCol) {
+          document.getElementById('managerNote').innerText = mapped.NoteCol;
+          document.getElementById('managerNote').style.fontStyle = "normal";
+          document.getElementById('managerNote').style.color = "#000";
+      }
+
+      // 2. ČÍSLA
+      document.getElementById('totalScore').innerText = formatPercent(mapped.TotalCol);
+      document.getElementById('hardData').innerText = formatPercent(mapped.HardCol);
+      document.getElementById('softEnv').innerText = formatPercent(mapped.EnvCol);
+      document.getElementById('softComm').innerText = formatPercent(mapped.CommCol);
+      document.getElementById('softServ').innerText = formatPercent(mapped.ServCol);
+      
+      const e = Number(mapped.EnvCol)||0; const c = Number(mapped.CommCol)||0; const s = Number(mapped.ServCol)||0;
+      document.getElementById('softAvg').innerText = formatPercent((e+c+s)/3);
+
+      // 3. LOGIKA TRENDU
+      const trendEl = document.getElementById('trendDisplay');
+      const trendVal = mapped.TrendCol;
+
+      if (trendVal !== null && trendVal !== undefined && typeof trendVal === 'number') {
+          const percentDiff = (trendVal * 100).toFixed(1);
+          if (trendVal > 0.001) {
+              trendEl.innerHTML = `<span class="trend-up">↗ +${percentDiff} %</span> oproti loňsku`;
+          } else if (trendVal < -0.001) {
+              trendEl.innerHTML = `<span class="trend-down">↘ ${percentDiff} %</span> oproti loňsku`;
+          } else {
+              trendEl.innerHTML = `<span class="trend-neutral">➡ beze změny</span>`;
+          }
+      } else {
+          trendEl.innerText = ""; // Žádná data z loňska = prázdno
+      }
+
+      // 4. GRAF + TABULKA (Zbytek kódu stejný jako minule...)
+      try {
+        let cData = {Q1:0, Q2:0, Q3:0, Q4:0};
+        if (mapped.ChartData && mapped.ChartData !== "null") cData = JSON.parse(mapped.ChartData);
+        
+        const ctx = document.getElementById('quarterChart').getContext('2d');
+        if (myChart) myChart.destroy();
+        myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                datasets: [{ label: 'Výkon', data: [cData.Q1*100, cData.Q2*100, cData.Q3*100, cData.Q4*100], backgroundColor: '#3498db' }]
+            },
+            options: { scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+      } catch (e) {}
+
+      try {
+        const tbody = document.getElementById('delayTableBody');
+        tbody.innerHTML = "";
+        let delays = mapped.DelayData ? JSON.parse(mapped.DelayData) : [];
+        if (!delays || delays.length === 0) {
+            document.getElementById('delayTable').style.display = 'none';
+            document.getElementById('noDelaysMsg').style.display = 'block';
+        } else {
+            document.getElementById('delayTable').style.display = 'table';
+            document.getElementById('noDelaysMsg').style.display = 'none';
+            delays.forEach(d => {
+                tbody.innerHTML += `<tr class="delay-row"><td>${d.datum}</td><td>${d.cislo}</td><td>${d.dny} dnů</td><td>${d.duvod}</td></tr>`;
+            });
+        }
+      } catch (e) {}
+    });
+  </script>
+</body>
+</html>
