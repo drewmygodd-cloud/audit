@@ -119,6 +119,17 @@
   </div>
 
   <script>
+    // --- POMOCNÁ FUNKCE PROTI PÁDŮM ---
+    // Pokud element neexistuje, script nespadne, jen vypíše varování do konzole
+    function safeSet(elementId, value) {
+        const el = document.getElementById(elementId);
+        if (el) {
+            el.innerText = value;
+        } else {
+            console.warn("POZOR: V HTML chybí element s ID: " + elementId);
+        }
+    }
+
     function formatPercent(val) {
       if (val === null || val === undefined || val === "") return "---";
       if (typeof val === 'number') return (val * 100).toFixed(1) + " %";
@@ -134,11 +145,10 @@
         { name: "YearCol", title: "Rok", type: 'Int'},
         { name: "TotalCol", title: "Celkové Skóre", type: 'Numeric'},
         { name: "HardCol", title: "Hard Data", type: 'Numeric'},
-        // PŮVODNÍ
         { name: "EnvCol", title: "Environment", type: 'Numeric'},
         { name: "CommCol", title: "Komunikace", type: 'Numeric'},
         { name: "ServCol", title: "Servis", type: 'Numeric'},
-        // NOVÉ SLOUPEC
+        // Nové sloupce
         { name: "InnoCol", title: "Inovace", type: 'Numeric'},
         { name: "QualCol", title: "Kvalifikace", type: 'Numeric'},
         { name: "BonCol", title: "Bonita", type: 'Numeric'},
@@ -155,34 +165,38 @@
       if (!record) return;
       const mapped = grist.mapColumnNames(record) || record;
 
-      document.getElementById('supName').innerText = mapped.NameCol || "---";
-      document.getElementById('auditYear').innerText = mapped.YearCol || "---";
+      // Používáme safeSet místo přímého přiřazení
+      safeSet('supName', mapped.NameCol || "---");
+      safeSet('auditYear', mapped.YearCol || "---");
       
       const noteEl = document.getElementById('managerNote');
-      if (mapped.NoteCol && mapped.NoteCol.trim() !== "") {
-          noteEl.innerText = mapped.NoteCol;
-          noteEl.style.fontStyle = "normal";
-          noteEl.style.color = "#000";
-      } else {
-          noteEl.innerHTML = '<span class="only-screen">(Zde bude prostor pro ruční poznámky po vytištění...)</span>';
-          noteEl.style.fontStyle = "italic";
-          noteEl.style.color = "#aaa";
+      if (noteEl) {
+          if (mapped.NoteCol && mapped.NoteCol.trim() !== "") {
+              noteEl.innerText = mapped.NoteCol;
+              noteEl.style.fontStyle = "normal";
+              noteEl.style.color = "#000";
+          } else {
+              noteEl.innerHTML = '<span class="only-screen">(Zde bude prostor pro ruční poznámky po vytištění...)</span>';
+              noteEl.style.fontStyle = "italic";
+              noteEl.style.color = "#aaa";
+          }
       }
 
       const scoreEl = document.getElementById('totalScore');
-      scoreEl.innerText = formatPercent(mapped.TotalCol);
+      if (scoreEl) scoreEl.innerText = formatPercent(mapped.TotalCol);
 
-      document.getElementById('hardData').innerText = formatPercent(mapped.HardCol);
-      document.getElementById('softEnv').innerText = formatPercent(mapped.EnvCol);
-      document.getElementById('softComm').innerText = formatPercent(mapped.CommCol);
-      document.getElementById('softServ').innerText = formatPercent(mapped.ServCol);
+      // Zápis hodnot do tabulky (Bezpečně)
+      safeSet('hardData', formatPercent(mapped.HardCol));
+      safeSet('softEnv', formatPercent(mapped.EnvCol));
+      safeSet('softComm', formatPercent(mapped.CommCol));
+      safeSet('softServ', formatPercent(mapped.ServCol));
       
-      // NOVÉ HODNOTY
-      document.getElementById('softInno').innerText = formatPercent(mapped.InnoCol);
-      document.getElementById('softQual').innerText = formatPercent(mapped.QualCol);
-      document.getElementById('softBon').innerText = formatPercent(mapped.BonCol);
+      // TADY TO PADALO - TEĎ UŽ NEBUDE
+      safeSet('softInno', formatPercent(mapped.InnoCol));
+      safeSet('softQual', formatPercent(mapped.QualCol));
+      safeSet('softBon', formatPercent(mapped.BonCol));
       
-      // VÝPOČET PRŮMĚRU (Nyní ze 6 hodnot)
+      // Výpočet průměru
       const e = Number(mapped.EnvCol)||0; 
       const c = Number(mapped.CommCol)||0; 
       const s = Number(mapped.ServCol)||0;
@@ -190,51 +204,63 @@
       const q = Number(mapped.QualCol)||0; 
       const b = Number(mapped.BonCol)||0;
       
-      document.getElementById('softAvg').innerText = formatPercent((e+c+s+i+q+b)/6);
+      safeSet('softAvg', formatPercent((e+c+s+i+q+b)/6));
 
+      // Trend
       const trendEl = document.getElementById('trendDisplay');
-      const trendVal = mapped.TrendCol;
-      if (trendVal !== null && trendVal !== undefined && typeof trendVal === 'number') {
-          const percentDiff = (trendVal * 100).toFixed(1);
-          if (trendVal > 0.001) trendEl.innerHTML = `<span class="trend-up">↗ +${percentDiff} %</span> oproti loňsku`;
-          else if (trendVal < -0.001) trendEl.innerHTML = `<span class="trend-down">↘ ${percentDiff} %</span> oproti loňsku`;
-          else trendEl.innerHTML = `<span class="trend-neutral">➡ beze změny</span>`;
-      } else {
-          trendEl.innerText = "";
+      if (trendEl) {
+          const trendVal = mapped.TrendCol;
+          if (trendVal !== null && trendVal !== undefined && typeof trendVal === 'number') {
+              const percentDiff = (trendVal * 100).toFixed(1);
+              if (trendVal > 0.001) trendEl.innerHTML = `<span class="trend-up">↗ +${percentDiff} %</span> oproti loňsku`;
+              else if (trendVal < -0.001) trendEl.innerHTML = `<span class="trend-down">↘ ${percentDiff} %</span> oproti loňsku`;
+              else trendEl.innerHTML = `<span class="trend-neutral">➡ beze změny</span>`;
+          } else {
+              trendEl.innerText = "";
+          }
       }
 
+      // Grafy (zůstávají v try-catch bloku, to je správně)
       try {
         let cData = {Q1:0, Q2:0, Q3:0, Q4:0};
         if (mapped.ChartData && mapped.ChartData !== "null") cData = JSON.parse(mapped.ChartData);
-        const ctx = document.getElementById('quarterChart').getContext('2d');
-        if (myChart) myChart.destroy();
-        myChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Q1', 'Q2', 'Q3', 'Q4'],
-                datasets: [{ label: 'Výkon', data: [cData.Q1*100, cData.Q2*100, cData.Q3*100, cData.Q4*100], backgroundColor: '#3498db' }]
-            },
-            options: { scales: { y: { beginAtZero: true, max: 100 } } }
-        });
-      } catch (e) {}
+        const ctx = document.getElementById('quarterChart'); // Změna: kontrola existence
+        if (ctx) {
+            if (myChart) myChart.destroy();
+            myChart = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                    datasets: [{ label: 'Výkon', data: [cData.Q1*100, cData.Q2*100, cData.Q3*100, cData.Q4*100], backgroundColor: '#3498db' }]
+                },
+                options: { scales: { y: { beginAtZero: true, max: 100 } } }
+            });
+        }
+      } catch (e) { console.warn("Chyba grafu:", e); }
 
       try {
         const tbody = document.getElementById('delayTableBody');
-        tbody.innerHTML = "";
-        let delays = mapped.DelayData ? JSON.parse(mapped.DelayData) : [];
-        if (!delays || delays.length === 0) {
-            document.getElementById('delayTable').style.display = 'none';
-            document.getElementById('noDelaysMsg').style.display = 'block';
-        } else {
-            document.getElementById('delayTable').style.display = 'table';
-            document.getElementById('noDelaysMsg').style.display = 'none';
-            delays.forEach(d => {
-                tbody.innerHTML += `<tr class="delay-row"><td>${d.datum}</td><td>${d.cislo}</td><td>${d.dny} dnů</td><td>${d.duvod}</td></tr>`;
-            });
+        if (tbody) {
+            tbody.innerHTML = "";
+            let delays = mapped.DelayData ? JSON.parse(mapped.DelayData) : [];
+            const tableEl = document.getElementById('delayTable');
+            const msgEl = document.getElementById('noDelaysMsg');
+
+            if (!delays || delays.length === 0) {
+                if(tableEl) tableEl.style.display = 'none';
+                if(msgEl) msgEl.style.display = 'block';
+            } else {
+                if(tableEl) tableEl.style.display = 'table';
+                if(msgEl) msgEl.style.display = 'none';
+                delays.forEach(d => {
+                    tbody.innerHTML += `<tr class="delay-row"><td>${d.datum}</td><td>${d.cislo}</td><td>${d.dny} dnů</td><td>${d.duvod}</td></tr>`;
+                });
+            }
         }
-      } catch (e) {}
+      } catch (e) { console.warn("Chyba tabulky zpoždění:", e); }
     });
   </script>
 </body>
 </html>
+
 
