@@ -87,15 +87,13 @@
 
     <h3>Výsledky</h3>
     <table>
-      <tr><td><strong>KPI (Hard Data)</strong></td><td class="num" id="hardData">0 %</td></tr>
+      <tr><td><strong>Zpoždění, stížnosti, reklamace</strong></td><td class="num" id="hardData">0 %</td></tr>
       <tr><td><strong>Environment</strong></td><td class="num" id="softEnv">0 %</td></tr>
       <tr><td><strong>Komunikace</strong></td><td class="num" id="softComm">0 %</td></tr>
       <tr><td><strong>Servis</strong></td><td class="num" id="softServ">0 %</td></tr>
       <tr><td><strong>Inovace</strong></td><td class="num" id="softInno">0 %</td></tr>
       <tr><td><strong>Kvalifikace pracovníků</strong></td><td class="num" id="softQual">0 %</td></tr>
       <tr><td><strong>Bonita</strong></td><td class="num" id="softBon">0 %</td></tr>
-      
-      <tr style="background:#eee;"><td><em>Průměr měkkých kritérií</em></td><td class="num" id="softAvg">0 %</td></tr>
     </table>
     
     <h3>Závěr a poznámky</h3>
@@ -114,10 +112,10 @@
     <div class="chart-container"><canvas id="quarterChart"></canvas></div>
     <h3>Zpožděné objednávky</h3>
     <table id="delayTable">
-      <thead><tr><th>Datum (Termín)</th><th>Číslo</th><th>Dnů</th><th>Důvod</th></tr></thead>
+      <thead><tr><th>Termín Doručení</th><th>Objednávka</th><th>Dnů</th><th>Důvod</th></tr></thead>
       <tbody id="delayTableBody"></tbody>
     </table>
-    <div id="noDelaysMsg" style="display:none; padding:20px; text-align:center; color:green;">✅ Žádné zpoždění.</div>
+    <div id="noDelaysMsg" style="display:none; padding:20px; text-align:center; color:green;">Žádné zpoždění.</div>
   </div>
 
   <script>
@@ -239,3 +237,4 @@
   </script>
 </body>
 </html>
+
