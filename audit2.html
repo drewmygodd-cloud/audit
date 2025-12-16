@@ -78,14 +78,14 @@
     </div>
 
     <div class="score-box">
-      <div><span style="font-size: 14px; color: #666; text-transform: uppercase;">Celkové skóre</span></div>
+      <div><span style="font-size: 14px; color: #666; text-transform: uppercase;">Hodnocení</span></div>
       <div class="value-container">
         <div class="value" id="totalScore">0 %</div>
         <div id="trendDisplay" class="trend"></div>
       </div>
     </div>
 
-    <h3>📊 Výsledky</h3>
+    <h3>Výsledky</h3>
     <table>
       <tr><td><strong>KPI (Hard Data)</strong></td><td class="num" id="hardData">0 %</td></tr>
       <tr><td><strong>Environment</strong></td><td class="num" id="softEnv">0 %</td></tr>
@@ -94,7 +94,7 @@
       <tr style="background:#eee;"><td><em>Průměr měkkých kritérií</em></td><td class="num" id="softAvg">0 %</td></tr>
     </table>
     
-    <h3>📝 Závěr a slovní hodnocení</h3>
+    <h3>Závěr a poznámky</h3>
     <div id="managerNote" style="border: 1px solid #ddd; min-height: 120px; padding: 10px; font-style: italic; color: #555;">
       </div>
 
@@ -106,9 +106,9 @@
 
   <div class="page page-break">
     <div class="header"><div><h1>Příloha</h1></div></div>
-    <h3>📈 Vývoj v čase</h3>
+    <h3>Kvartální hodnocení</h3>
     <div class="chart-container"><canvas id="quarterChart"></canvas></div>
-    <h3>⚠️ Zpožděné objednávky</h3>
+    <h3>Zpožděné objednávky</h3>
     <table id="delayTable">
       <thead><tr><th>Datum</th><th>Číslo</th><th>Dnů</th><th>Důvod</th></tr></thead>
       <tbody id="delayTableBody"></tbody>
@@ -219,3 +219,4 @@
   </script>
 </body>
 </html>
+
