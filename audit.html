@@ -28,14 +28,14 @@
     
     /* Hlavní skóre */
     .score-box { background: #f4f4f4; border-left: 5px solid #000; padding: 15px; display: flex; flex-direction: column; justify-content: center; }
-    .value { font-size: 32px; font-weight: bold; color: #000; margin-top: 5px; } /* VŽDY ČERNÁ */
+    .value { font-size: 32px; font-weight: bold; color: #000; margin-top: 5px; }
     
     /* Alert Boxy - ČERNOBÍLÉ */
     .alert-box { background: #fff; border: 1px solid #000; padding: 10px; text-align: center; display: flex; flex-direction: column; justify-content: center; position: relative; }
     .alert-num { font-size: 28px; font-weight: bold; line-height: 1; color: #000; }
     .alert-label { font-size: 11px; text-transform: uppercase; color: #000; margin-top: 5px; letter-spacing: 1px; }
     
-    /* Statusy (jen pro logiku, vizuálně bez barvy) */
+    /* Statusy */
     .status-ok, .status-warning, .status-danger { border-color: #000; background: #fff; color: #000; }
 
     /* Tabulky */
@@ -44,11 +44,11 @@
     th { background-color: #f4f4f4; font-size: 12px; font-weight: bold; }
     td.num { text-align: right; font-weight: bold; }
     
-    /* Styl pro reklamace tabulku - ČERNOBÍLÝ */
+    /* Styl pro reklamace tabulku */
     .claim-header { background-color: #eee; color: #000; border-bottom: 2px solid #000; }
     .claim-type { font-weight: bold; color: #000; font-size: 11px; background: #fff; padding: 2px 5px; border: 1px solid #000; border-radius: 3px; }
 
-    /* Trend (Zůstává barevný pro indikaci, ale zbytek je černý) */
+    /* Trend */
     .trend-up { color: #27ae60; }
     .trend-down { color: #c0392b; }
     .trend-neutral { color: #7f8c8d; }
@@ -97,7 +97,7 @@
 
     <h3>Výsledky</h3>
     <table>
-      <tr><td><strong>Zpoždění, reklamace a stížnosti</strong></td><td class="num" id="hardData">0 %</td></tr>
+      <tr><td><strong>KPI (Hard Data)</strong></td><td class="num" id="hardData">0 %</td></tr>
       <tr><td><strong>Environment</strong></td><td class="num" id="softEnv">0 %</td></tr>
       <tr><td><strong>Komunikace</strong></td><td class="num" id="softComm">0 %</td></tr>
       <tr><td><strong>Servis</strong></td><td class="num" id="softServ">0 %</td></tr>
@@ -181,11 +181,11 @@
           }
       }
 
-      // --- ZMĚNA: ODSTRANĚNO BAREVNÉ PODMÍNKOVÁNÍ SKÓRE ---
+      // --- CELKOVÉ SKÓRE ---
       const scoreEl = document.getElementById('totalScore');
       if (scoreEl) {
           scoreEl.innerText = formatPercent(mapped.TotalCol);
-          // Žádné if/else pro barvy -> zůstává černé
+          // Barva zůstává černá
       }
 
       safeSet('hardData', formatPercent(mapped.HardCol));
@@ -196,7 +196,7 @@
       safeSet('softQual', formatPercent(mapped.QualCol));
       safeSet('softBon', formatPercent(mapped.BonCol));
 
-      // Trend - ZŮSTÁVÁ BAREVNÝ (aby bylo poznat zlepšení/zhoršení)
+      // Trend
       const tEl = document.getElementById('trendDisplay');
       if (tEl && typeof mapped.TrendCol === 'number') {
           const diff = (mapped.TrendCol*100).toFixed(1);
@@ -205,31 +205,45 @@
           else tEl.innerHTML = `<span class="trend-neutral">➡ beze změny</span>`;
       }
 
-      // --- ZPOŽDĚNÍ ---
+      // --- ZPOŽDĚNÍ (NOVÁ LOGIKA) ---
       let delayCount = 0;
       try {
           const tbody = document.getElementById('delayTableBody');
           tbody.innerHTML = "";
           let delays = mapped.DelayData ? JSON.parse(mapped.DelayData) : [];
+          delayCount = delays.length;
           
-          if (!delays.length) {
+          if (delayCount === 0) {
               document.getElementById('delayTable').style.display = 'none';
               document.getElementById('noDelaysMsg').style.display = 'block';
           } else {
               document.getElementById('delayTable').style.display = 'table';
               document.getElementById('noDelaysMsg').style.display = 'none';
-              delays.forEach(d => {
-                  if (!d.cislo.includes("Dalších")) delayCount++;
+              
+              // PODMÍNKA: Pokud je jich více než 5, zobrazíme souhrn
+              if (delayCount > 5) {
+                  // Spočítáme průměr
+                  let totalDays = delays.reduce((sum, d) => sum + (d.dny || 0), 0);
+                  let avg = totalDays / delayCount;
                   
-                  let style = "";
-                  if (d.datum === "---") { style = "font-style:italic; background:#f9f9f9;"; delayCount = "Mnoh."; }
-                  
-                  // Text je černý
-                  tbody.innerHTML += `<tr style="${style}"><td>${d.datum}</td><td>${d.cislo}</td><td style="font-weight:bold;">${d.dny}</td><td>${d.duvod}</td></tr>`;
-              });
-              if (delayCount !== "Mnoh.") delayCount = delays.length;
+                  tbody.innerHTML = `
+                      <tr style="background-color: #f9f9f9; height: 50px;">
+                          <td colspan="4" style="text-align: center; vertical-align: middle;">
+                              <strong>Celkem ${delayCount} zpožděných objednávek</strong><br>
+                              <span style="font-size: 0.9em; color: #555;">Průměrné zpoždění: <strong>${avg.toFixed(1)} dnů</strong></span>
+                          </td>
+                      </tr>
+                  `;
+              } else {
+                  // Jinak vypíšeme všechny (max 5)
+                  delays.forEach(d => {
+                      // Přidáme "dnů" za číslo, protože z Pythonu teď chodí jen int
+                      let daysText = d.dny + " dnů";
+                      tbody.innerHTML += `<tr><td>${d.datum}</td><td>${d.cislo}</td><td style="font-weight:bold;">${daysText}</td><td>${d.duvod}</td></tr>`;
+                  });
+              }
           }
-      } catch(e) {}
+      } catch(e) { console.warn(e); }
 
       // Aktualizace BOXU Zpoždění
       safeSet('countDelays', delayCount);
@@ -283,4 +297,3 @@
   </script>
 </body>
 </html>
-
