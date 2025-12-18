@@ -6,8 +6,8 @@
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* ZÁKLADNÍ STYLY */
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f0f0; margin: 0; padding: 20px; color: #333; }
+    /* ZÁKLADNÍ STYLY - MONOCHROME */
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f0f0; margin: 0; padding: 20px; color: #000; }
     .page { background: white; width: 210mm; min-height: 297mm; margin: 0 auto 20px auto; padding: 20mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); box-sizing: border-box; }
     
     @media print {
@@ -19,36 +19,40 @@
     }
 
     /* Hlavička */
-    .header { border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
-    .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; }
+    .header { border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
+    .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; color: #000; }
     .logo-img { height: 90px; width: auto; max-width: 300px; object-fit: contain; margin-bottom: 15px; display: block; }
 
-    /* DASHBOARD GRID - Nový design */
+    /* DASHBOARD GRID */
     .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 30px; }
     
     /* Hlavní skóre */
-    .score-box { background: #f4f4f4; border-left: 5px solid #333; padding: 15px; display: flex; flex-direction: column; justify-content: center; }
-    .value { font-size: 32px; font-weight: bold; color: #2c3e50; margin-top: 5px; }
+    .score-box { background: #f4f4f4; border-left: 5px solid #000; padding: 15px; display: flex; flex-direction: column; justify-content: center; }
+    /* Barva se nastavuje dynamicky přes JS, defaultně černá */
+    .value { font-size: 32px; font-weight: bold; color: #000; margin-top: 5px; }
     
-    /* Alert Boxy (Budíky) */
-    .alert-box { background: #fff; border: 1px solid #ddd; padding: 10px; text-align: center; display: flex; flex-direction: column; justify-content: center; position: relative; }
-    .alert-num { font-size: 28px; font-weight: bold; line-height: 1; }
-    .alert-label { font-size: 11px; text-transform: uppercase; color: #777; margin-top: 5px; letter-spacing: 1px; }
+    /* Alert Boxy - NYNÍ ČERNOBÍLÉ */
+    .alert-box { background: #fff; border: 1px solid #000; padding: 10px; text-align: center; display: flex; flex-direction: column; justify-content: center; position: relative; }
+    .alert-num { font-size: 28px; font-weight: bold; line-height: 1; color: #000; }
+    .alert-label { font-size: 11px; text-transform: uppercase; color: #000; margin-top: 5px; letter-spacing: 1px; }
     
-    /* Barvy Alertů */
-    .status-ok { color: #27ae60; border-color: #27ae60; background: #f0fbf4; }
-    .status-warning { color: #d35400; border-color: #f39c12; background: #fef9e7; }
-    .status-danger { color: #c0392b; border-color: #c0392b; background: #fdedec; }
+    /* Statusy (jen pro logiku, vizuálně bez barvy) */
+    .status-ok, .status-warning, .status-danger { border-color: #000; background: #fff; color: #000; }
 
     /* Tabulky */
     table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background-color: #f9f9f9; font-size: 12px; }
+    th, td { border: 1px solid #000; padding: 8px; text-align: left; color: #000; }
+    th { background-color: #f4f4f4; font-size: 12px; font-weight: bold; }
     td.num { text-align: right; font-weight: bold; }
     
-    /* Styl pro reklamace tabulku */
-    .claim-header { background-color: #fdedec; color: #c0392b; border-bottom: 2px solid #c0392b; }
-    .claim-type { font-weight: bold; color: #c0392b; font-size: 11px; background: #fff; padding: 2px 5px; border: 1px solid #c0392b; border-radius: 3px; }
+    /* Styl pro reklamace tabulku - ČERNOBÍLÝ */
+    .claim-header { background-color: #eee; color: #000; border-bottom: 2px solid #000; }
+    .claim-type { font-weight: bold; color: #000; font-size: 11px; background: #fff; padding: 2px 5px; border: 1px solid #000; border-radius: 3px; }
+
+    /* Trend (Zůstává barevný) */
+    .trend-up { color: #27ae60; }
+    .trend-down { color: #c0392b; }
+    .trend-neutral { color: #7f8c8d; }
 
     .chart-container { position: relative; height: 250px; width: 100%; margin-top: 20px; }
     .btn-print { display: block; width: 100%; max-width: 200px; margin: 0 auto 20px auto; padding: 10px; background: #333; color: white; text-align: center; cursor: pointer; border-radius: 5px; }
@@ -76,7 +80,7 @@
 
     <div class="dashboard-grid">
         <div class="score-box">
-            <span style="font-size: 12px; color: #666; text-transform: uppercase;">Hodnocení</span>
+            <span style="font-size: 12px; color: #000; text-transform: uppercase;">Hodnocení</span>
             <div class="value" id="totalScore">0 %</div>
             <div id="trendDisplay" style="font-size: 14px; margin-top: 5px;"></div>
         </div>
@@ -104,9 +108,9 @@
     </table>
     
     <h3>Poznámky</h3>
-    <div id="managerNote" style="border: 1px solid #ddd; min-height: 100px; padding: 10px; font-style: italic; color: #555;"></div>
+    <div id="managerNote" style="border: 1px solid #000; min-height: 100px; padding: 10px; font-style: italic; color: #000;"></div>
 
-    <div style="margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px; display: flex; justify-content: space-between;">
+    <div style="margin-top: 40px; border-top: 1px solid #000; padding-top: 20px; display: flex; justify-content: space-between;">
         <div style="text-align:center; width:40%; border-top:1px solid #000; padding-top:5px;">Dodavatel</div>
         <div style="text-align:center; width:40%; border-top:1px solid #000; padding-top:5px;">Auditor</div>
     </div>
@@ -119,7 +123,7 @@
 
     <div id="sectionClaims" style="display:none; margin-top: 30px;">
         <h3 style="padding-bottom:5px;">Reklamace a stížnosti</h3>
-        <table style="border: 1px">
+        <table style="border: 1px solid #000">
             <thead class="claim-header"><tr><th>Datum</th><th>Objednávka</th><th>Typ</th><th>Detail problému</th></tr></thead>
             <tbody id="tableClaimsBody"></tbody>
         </table>
@@ -155,7 +159,7 @@
         { name: "BonCol", title: "Bonita", type: 'Numeric'},
         { name: "ChartData", title: "Graf JSON", type: 'Text'},
         { name: "DelayData", title: "Zpoždění JSON", type: 'Text'},
-        { name: "ClaimData", title: "Reklamace JSON", type: 'Text'}, // TOTO NAMAPOVAT
+        { name: "ClaimData", title: "Reklamace JSON", type: 'Text'},
         { name: "TrendCol", title: "Trend", type: 'Numeric'},
         { name: "NoteCol", title: "Poznámka", type: 'Text'}
       ],
@@ -179,8 +183,20 @@
           }
       }
 
+      // --- BARVA SKÓRE (SEMAFOR) ---
       const scoreEl = document.getElementById('totalScore');
-      if (scoreEl) scoreEl.innerText = formatPercent(mapped.TotalCol);
+      if (scoreEl) {
+          const val = mapped.TotalCol;
+          scoreEl.innerText = formatPercent(val);
+          // Přidána logika pro barvu JEN pro skóre
+          if (typeof val === 'number') {
+              if (val >= 0.90) scoreEl.style.color = '#27ae60'; // Zelená
+              else if (val >= 0.75) scoreEl.style.color = '#d35400'; // Oranžová
+              else scoreEl.style.color = '#c0392b'; // Červená
+          } else {
+              scoreEl.style.color = '#000';
+          }
+      }
 
       safeSet('hardData', formatPercent(mapped.HardCol));
       safeSet('softEnv', formatPercent(mapped.EnvCol));
@@ -190,11 +206,7 @@
       safeSet('softQual', formatPercent(mapped.QualCol));
       safeSet('softBon', formatPercent(mapped.BonCol));
 
-      const softAvg = ( (Number(mapped.EnvCol)||0) + (Number(mapped.CommCol)||0) + (Number(mapped.ServCol)||0) +
-                        (Number(mapped.InnoCol)||0) + (Number(mapped.QualCol)||0) + (Number(mapped.BonCol)||0) ) / 6;
-      safeSet('softAvg', formatPercent(softAvg));
-
-      // Trend
+      // Trend - ZACHOVÁNY BARVY
       const tEl = document.getElementById('trendDisplay');
       if (tEl && typeof mapped.TrendCol === 'number') {
           const diff = (mapped.TrendCol*100).toFixed(1);
@@ -217,22 +229,23 @@
               document.getElementById('delayTable').style.display = 'table';
               document.getElementById('noDelaysMsg').style.display = 'none';
               delays.forEach(d => {
-                   // Počítáme jen skutečné položky, ne souhrnný řádek
                   if (!d.cislo.includes("Dalších")) delayCount++;
                   
                   let style = "";
-                  if (d.datum === "---") { style = "font-style:italic; background:#f9f9f9;"; delayCount = "Mnoh."; } // Indikace pro box
+                  if (d.datum === "---") { style = "font-style:italic; background:#f9f9f9;"; delayCount = "Mnoh."; }
                   
-                  tbody.innerHTML += `<tr style="${style}"><td>${d.datum}</td><td>${d.cislo}</td><td style="color:#c0392b;font-weight:bold;">${d.dny}</td><td>${d.duvod}</td></tr>`;
+                  // ODSTRANĚNA ČERVENÁ BARVA Z DNŮ (Nyní černě)
+                  tbody.innerHTML += `<tr style="${style}"><td>${d.datum}</td><td>${d.cislo}</td><td style="font-weight:bold;">${d.dny}</td><td>${d.duvod}</td></tr>`;
               });
-              if (delayCount !== "Mnoh.") delayCount = delays.length; // Fallback
+              if (delayCount !== "Mnoh.") delayCount = delays.length;
           }
       } catch(e) {}
 
       // Aktualizace BOXU Zpoždění
       safeSet('countDelays', delayCount);
       const boxDel = document.getElementById('boxDelays');
-      boxDel.className = 'alert-box'; // Reset
+      boxDel.className = 'alert-box'; // Reset tříd
+      // Používáme status třídy jen pro logiku (v CSS jsou bez barvy)
       if (delayCount === 0) boxDel.classList.add('status-ok');
       else boxDel.classList.add('status-warning');
 
@@ -257,7 +270,7 @@
       // Aktualizace BOXU Reklamace
       safeSet('countClaims', claimCount);
       const boxClm = document.getElementById('boxClaims');
-      boxClm.className = 'alert-box'; // Reset
+      boxClm.className = 'alert-box';
       if (claimCount > 0) boxClm.classList.add('status-danger');
       else boxClm.classList.add('status-ok');
 
@@ -281,4 +294,3 @@
   </script>
 </body>
 </html>
-
