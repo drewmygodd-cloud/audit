@@ -6,7 +6,7 @@
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* ZÁKLADNÍ STYLY - MONOCHROME */
+    /* ZÁKLADNÍ STYLY - CLEAN MONOCHROME */
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f0f0; margin: 0; padding: 20px; color: #000; }
     .page { background: white; width: 210mm; min-height: 297mm; margin: 0 auto 20px auto; padding: 20mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); box-sizing: border-box; }
     
@@ -28,10 +28,9 @@
     
     /* Hlavní skóre */
     .score-box { background: #f4f4f4; border-left: 5px solid #000; padding: 15px; display: flex; flex-direction: column; justify-content: center; }
-    /* Barva se nastavuje dynamicky přes JS, defaultně černá */
-    .value { font-size: 32px; font-weight: bold; color: #000; margin-top: 5px; }
+    .value { font-size: 32px; font-weight: bold; color: #000; margin-top: 5px; } /* VŽDY ČERNÁ */
     
-    /* Alert Boxy - NYNÍ ČERNOBÍLÉ */
+    /* Alert Boxy - ČERNOBÍLÉ */
     .alert-box { background: #fff; border: 1px solid #000; padding: 10px; text-align: center; display: flex; flex-direction: column; justify-content: center; position: relative; }
     .alert-num { font-size: 28px; font-weight: bold; line-height: 1; color: #000; }
     .alert-label { font-size: 11px; text-transform: uppercase; color: #000; margin-top: 5px; letter-spacing: 1px; }
@@ -49,7 +48,7 @@
     .claim-header { background-color: #eee; color: #000; border-bottom: 2px solid #000; }
     .claim-type { font-weight: bold; color: #000; font-size: 11px; background: #fff; padding: 2px 5px; border: 1px solid #000; border-radius: 3px; }
 
-    /* Trend (Zůstává barevný) */
+    /* Trend (Zůstává barevný pro indikaci, ale zbytek je černý) */
     .trend-up { color: #27ae60; }
     .trend-down { color: #c0392b; }
     .trend-neutral { color: #7f8c8d; }
@@ -80,7 +79,7 @@
 
     <div class="dashboard-grid">
         <div class="score-box">
-            <span style="font-size: 12px; color: #666; text-transform: uppercase;">Hodnocení</span>
+            <span style="font-size: 12px; color: #000; text-transform: uppercase;">Hodnocení</span>
             <div class="value" id="totalScore">0 %</div>
             <div id="trendDisplay" style="font-size: 14px; margin-top: 5px;"></div>
         </div>
@@ -138,7 +137,6 @@
   </div>
 
   <script>
-    // Pomocné funkce
     function safeSet(id, val) { const el=document.getElementById(id); if(el) el.innerText=val; }
     function formatPercent(val) { if(typeof val==='number') return (val*100).toFixed(1)+" %"; return "---"; }
 
@@ -183,19 +181,11 @@
           }
       }
 
-      // --- BARVA SKÓRE (SEMAFOR) ---
+      // --- ZMĚNA: ODSTRANĚNO BAREVNÉ PODMÍNKOVÁNÍ SKÓRE ---
       const scoreEl = document.getElementById('totalScore');
       if (scoreEl) {
-          const val = mapped.TotalCol;
-          scoreEl.innerText = formatPercent(val);
-          // Přidána logika pro barvu JEN pro skóre
-          if (typeof val === 'number') {
-              if (val >= 0.90) scoreEl.style.color = '#27ae60'; // Zelená
-              else if (val >= 0.75) scoreEl.style.color = '#d35400'; // Oranžová
-              else scoreEl.style.color = '#c0392b'; // Červená
-          } else {
-              scoreEl.style.color = '#000';
-          }
+          scoreEl.innerText = formatPercent(mapped.TotalCol);
+          // Žádné if/else pro barvy -> zůstává černé
       }
 
       safeSet('hardData', formatPercent(mapped.HardCol));
@@ -206,7 +196,7 @@
       safeSet('softQual', formatPercent(mapped.QualCol));
       safeSet('softBon', formatPercent(mapped.BonCol));
 
-      // Trend - ZACHOVÁNY BARVY
+      // Trend - ZŮSTÁVÁ BAREVNÝ (aby bylo poznat zlepšení/zhoršení)
       const tEl = document.getElementById('trendDisplay');
       if (tEl && typeof mapped.TrendCol === 'number') {
           const diff = (mapped.TrendCol*100).toFixed(1);
@@ -234,7 +224,7 @@
                   let style = "";
                   if (d.datum === "---") { style = "font-style:italic; background:#f9f9f9;"; delayCount = "Mnoh."; }
                   
-                  // ODSTRANĚNA ČERVENÁ BARVA Z DNŮ (Nyní černě)
+                  // Text je černý
                   tbody.innerHTML += `<tr style="${style}"><td>${d.datum}</td><td>${d.cislo}</td><td style="font-weight:bold;">${d.dny}</td><td>${d.duvod}</td></tr>`;
               });
               if (delayCount !== "Mnoh.") delayCount = delays.length;
@@ -244,8 +234,7 @@
       // Aktualizace BOXU Zpoždění
       safeSet('countDelays', delayCount);
       const boxDel = document.getElementById('boxDelays');
-      boxDel.className = 'alert-box'; // Reset tříd
-      // Používáme status třídy jen pro logiku (v CSS jsou bez barvy)
+      boxDel.className = 'alert-box';
       if (delayCount === 0) boxDel.classList.add('status-ok');
       else boxDel.classList.add('status-warning');
 
@@ -294,4 +283,3 @@
   </script>
 </body>
 </html>
-
