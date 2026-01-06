@@ -218,6 +218,7 @@
       safeSet('softBon', formatPercent(mapped.BonCol));
 
       // Trend (Změna: přidán rok)
+      // Trend (Změna: formát "vs MinulýRok")
       const tEl = document.getElementById('trendDisplay');
       if (tEl && typeof mapped.TrendCol === 'number') {
           const diff = (mapped.TrendCol*100).toFixed(1);
@@ -227,11 +228,13 @@
           else if (mapped.TrendCol < -0.001) trendHtml = `<span class="trend-down">↘ ${diff}%</span>`;
           else trendHtml = `<span class="trend-neutral">➡ beze změny</span>`;
           
-          // Získání roků pro popisek
+          // Získání minulého roku
           const curYear = mapped.YearCol || new Date().getFullYear();
           const prevYear = curYear - 1;
           
-          tEl.innerHTML = `${trendHtml} <span style="color:#555; margin-left:5px; font-size: 0.9em;">${prevYear}/${curYear}</span>`;
+          // ZMĚNA ZDE: Místo "2024/2025" dáváme "vs 2024"
+          tEl.innerHTML = `${trendHtml} <span style="color:#555; margin-left:5px; font-size: 0.9em;">vs ${prevYear}</span>`;
+      }
       }
 
       // ZPOŽDĚNÍ
@@ -333,3 +336,4 @@
   </script>
 </body>
 </html>
+
