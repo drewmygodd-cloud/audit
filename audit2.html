@@ -23,7 +23,7 @@
     .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; color: #000; }
     .logo-img { height: 90px; width: auto; max-width: 300px; object-fit: contain; margin-bottom: 15px; display: block; }
 
-    /* DASHBOARD GRID - 4 SLOUPCE */
+    /* DASHBOARD GRID */
     .dashboard-grid { 
         display: grid; 
         grid-template-columns: 1.8fr 1.5fr 0.8fr 1fr; 
@@ -31,17 +31,16 @@
         margin-bottom: 30px; 
     }
     
-    /* Hlavní skóre */
+    /* Boxy */
     .score-box { background: #f4f4f4; border-left: 5px solid #000; padding: 15px; display: flex; flex-direction: column; justify-content: center; }
     .value { font-size: 32px; font-weight: bold; color: #000; margin-top: 5px; }
     
-    /* Alert Boxy */
     .alert-box { background: #fff; border: 1px solid #000; padding: 10px; text-align: center; display: flex; flex-direction: column; justify-content: center; position: relative; }
     .alert-num { font-size: 24px; font-weight: bold; line-height: 1.1; color: #000; }
     .alert-sub { font-size: 14px; font-weight: normal; color: #555; }
     .alert-label { font-size: 11px; text-transform: uppercase; color: #000; margin-top: 5px; letter-spacing: 1px; }
     
-    /* Statusy */
+    /* Statusy (černobílé) */
     .status-ok, .status-warning, .status-danger { border-color: #000; background: #fff; color: #000; }
 
     /* Tabulky */
@@ -50,11 +49,10 @@
     th { background-color: #f4f4f4; font-size: 12px; font-weight: bold; }
     td.num { text-align: right; font-weight: bold; }
     
-    /* Styl pro reklamace tabulku */
     .claim-header { background-color: #eee; color: #000; border-bottom: 2px solid #000; }
     .claim-type { font-weight: bold; color: #000; font-size: 11px; background: #fff; padding: 2px 5px; border: 1px solid #000; border-radius: 3px; }
 
-    /* Trend */
+    /* Trend (Barevný) */
     .trend-up { color: #27ae60; }
     .trend-down { color: #c0392b; }
     .trend-neutral { color: #7f8c8d; }
@@ -108,7 +106,7 @@
 
     <h3>Výsledky</h3>
     <table>
-      <tr><td><strong>Zpoždění, stížnosti a reklamace</strong></td><td class="num" id="hardData">0 %</td></tr>
+      <tr><td><strong>Spolehlivost a kvalita (Hard Data)</strong></td><td class="num" id="hardData">0 %</td></tr>
       <tr><td><strong>Environment</strong></td><td class="num" id="softEnv">0 %</td></tr>
       <tr><td><strong>Komunikace</strong></td><td class="num" id="softComm">0 %</td></tr>
       <tr><td><strong>Servis</strong></td><td class="num" id="softServ">0 %</td></tr>
@@ -148,17 +146,8 @@
   </div>
 
   <script>
-    // Pomocné funkce pro bezpečné vkládání dat
-    function safeSet(id, val) { 
-        const el = document.getElementById(id); 
-        if(el) el.innerText = val; 
-    }
-    
-    function formatPercent(val) { 
-        if(typeof val === 'number') return (val * 100).toFixed(1) + " %"; 
-        return "---"; 
-    }
-    
+    function safeSet(id, val) { const el=document.getElementById(id); if(el) el.innerText=val; }
+    function formatPercent(val) { if(typeof val==='number') return (val*100).toFixed(1)+" %"; return "---"; }
     function formatCurrency(val) {
         if(typeof val === 'number') {
             return val.toLocaleString('cs-CZ', { style: 'currency', currency: 'CZK', maximumFractionDigits: 0 });
@@ -208,14 +197,11 @@
           }
       }
 
-      // Skóre
       const scoreEl = document.getElementById('totalScore');
       if (scoreEl) scoreEl.innerText = formatPercent(mapped.TotalCol);
 
-      // Obrat
       safeSet('turnoverVal', formatCurrency(mapped.TurnoverCol));
 
-      // Tabulka výsledků
       safeSet('hardData', formatPercent(mapped.HardCol));
       safeSet('softEnv', formatPercent(mapped.EnvCol));
       safeSet('softComm', formatPercent(mapped.CommCol));
@@ -224,10 +210,10 @@
       safeSet('softQual', formatPercent(mapped.QualCol));
       safeSet('softBon', formatPercent(mapped.BonCol));
 
-      // Trend (Formát "vs 2024")
+      // Trend "vs Rok"
       const tEl = document.getElementById('trendDisplay');
       if (tEl && typeof mapped.TrendCol === 'number') {
-          const diff = (mapped.TrendCol * 100).toFixed(1);
+          const diff = (mapped.TrendCol*100).toFixed(1);
           let trendHtml = "";
           
           if (mapped.TrendCol > 0.001) trendHtml = `<span class="trend-up">↗ +${diff}%</span>`;
@@ -282,4 +268,65 @@
       if (countEl) countEl.innerHTML = `${delayCount} <span class="alert-sub">/ ${totalOrders}</span>`;
       
       const boxDel = document.getElementById('boxDelays');
-      if (boxDel)
+      if (boxDel) {
+          boxDel.className = 'alert-box';
+          if (delayCount === 0) boxDel.classList.add('status-ok');
+          else boxDel.classList.add('status-warning');
+      }
+
+      // Reklamace
+      let claimCount = 0;
+      try {
+          const cBody = document.getElementById('tableClaimsBody');
+          cBody.innerHTML = "";
+          let claims = mapped.ClaimData ? JSON.parse(mapped.ClaimData) : [];
+          claimCount = claims.length;
+
+          if (claimCount > 0) {
+              document.getElementById('sectionClaims').style.display = 'block';
+              claims.forEach(c => {
+                  cBody.innerHTML += `<tr><td>${c.datum}</td><td><strong>${c.cislo}</strong></td><td><span class="claim-type">${c.typ}</span></td><td>${c.duvod}</td></tr>`;
+              });
+          } else {
+              document.getElementById('sectionClaims').style.display = 'none';
+          }
+      } catch(e) { console.warn("Claim error", e); }
+
+      safeSet('countClaims', claimCount);
+      const boxClm = document.getElementById('boxClaims');
+      if (boxClm) {
+          boxClm.className = 'alert-box';
+          if (claimCount > 0) boxClm.classList.add('status-danger');
+          else boxClm.classList.add('status-ok');
+      }
+
+      // Graf
+      try {
+        let cData = mapped.ChartData ? JSON.parse(mapped.ChartData) : {Q1:0,Q2:0,Q3:0,Q4:0};
+        const ctx = document.getElementById('quarterChart');
+        if (ctx) {
+            if (myChart) myChart.destroy();
+            myChart = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                    datasets: [{ label: 'Výkon', data: [cData.Q1*100, cData.Q2*100, cData.Q3*100, cData.Q4*100], backgroundColor: '#3498db' }]
+                },
+                options: { 
+                    plugins: { legend: { display: false } },
+                    scales: { 
+                        y: { 
+                            beginAtZero: true, 
+                            max: 100,
+                            ticks: { callback: function(value) { return value + " %" } }
+                        } 
+                    }, 
+                    maintainAspectRatio: false 
+                }
+            });
+        }
+      } catch(e) {}
+    });
+  </script>
+</body>
+</html>
