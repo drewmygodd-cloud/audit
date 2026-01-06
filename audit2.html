@@ -33,7 +33,6 @@
     /* Alert Boxy */
     .alert-box { background: #fff; border: 1px solid #000; padding: 10px; text-align: center; display: flex; flex-direction: column; justify-content: center; position: relative; }
     .alert-num { font-size: 28px; font-weight: bold; line-height: 1; color: #000; }
-    /* Menší písmo pro celkový počet v budíku */
     .alert-sub { font-size: 16px; font-weight: normal; color: #555; }
     .alert-label { font-size: 11px; text-transform: uppercase; color: #000; margin-top: 5px; letter-spacing: 1px; }
     
@@ -67,7 +66,7 @@
     <div class="header">
       <div class="header-left">
         <img src="https://www.streicher.cz/fileadmin/Vorlage/images/logo.png" alt="Logo STREICHER" class="logo-img" id="companyLogo">
-        <div><h1>Audit Dodavatele</h1><small>Výroční hodnocení kvality</small></div>
+        <div><h1>Audit Dodavatele</h1><small>Výroční vyhodnocení</small></div>
       </div>
       <div style="text-align: right; margin-top: 10px;">
         Období: <span id="auditYear" style="font-weight:bold;">---</span><br>
@@ -99,7 +98,7 @@
 
     <h3>Výsledky</h3>
     <table>
-      <tr><td><strong>Spolehlivost a kvalita (Hard Data)</strong></td><td class="num" id="hardData">0 %</td></tr>
+      <tr><td><strong>Zpoždění, stížnosti a reklamace</strong></td><td class="num" id="hardData">0 %</td></tr>
       <tr><td><strong>Environment</strong></td><td class="num" id="softEnv">0 %</td></tr>
       <tr><td><strong>Komunikace</strong></td><td class="num" id="softComm">0 %</td></tr>
       <tr><td><strong>Servis</strong></td><td class="num" id="softServ">0 %</td></tr>
@@ -204,7 +203,7 @@
           else tEl.innerHTML = `<span class="trend-neutral">➡ beze změny</span>`;
       }
 
-      // --- ZPOŽDĚNÍ + CELKOVÝ POČET ---
+      // --- ZPOŽDĚNÍ + STATISTIKA (Nová logika z Pythonu) ---
       let delayCount = 0;
       let totalOrders = 0;
       try {
@@ -213,19 +212,12 @@
           
           let parsedData = mapped.DelayData ? JSON.parse(mapped.DelayData) : {};
           
-          // Podpora pro STARÝ i NOVÝ formát JSONu (aby to nespadlo, než aktualizujete Python)
-          let delays = [];
-          if (Array.isArray(parsedData)) {
-               // Starý formát (jen seznam)
-               delays = parsedData;
-               totalOrders = "??"; 
-          } else {
-               // Nový formát {celkem: 100, seznam: [...]}
-               delays = parsedData.seznam || [];
-               totalOrders = parsedData.celkem || 0;
-          }
-          
-          delayCount = delays.length;
+          // Podpora pro nové Python data (bezpečně)
+          let delays = parsedData.seznam || [];
+          delayCount = parsedData.zpozdene || 0;
+          totalOrders = parsedData.celkem || 0;
+          // Pokud Python posílá už hotový průměr, můžeme ho použít (parsedData.prumer)
+          let avgDelay = parsedData.prumer || 0;
           
           if (delayCount === 0) {
               document.getElementById('delayTable').style.display = 'none';
@@ -235,36 +227,30 @@
               document.getElementById('noDelaysMsg').style.display = 'none';
               
               if (delayCount > 5) {
-                  // SOUHRN
-                  let totalDays = delays.reduce((sum, d) => sum + (d.dny || 0), 0);
-                  let avg = totalDays / delayCount;
-                  
+                  // SOUHRN (S použitím přesných dat z Pythonu)
                   tbody.innerHTML = `
                       <tr style="background-color: #f9f9f9; height: 50px;">
                           <td colspan="4" style="text-align: center; vertical-align: middle;">
                               <strong>Celkem ${delayCount} zpožděných objednávek</strong><br>
                               <span style="font-size: 0.9em; color: #555;">(Z celkového počtu ${totalOrders} objednávek)</span><br>
-                              <span style="font-size: 0.9em; color: #555;">Průměrné zpoždění: <strong>${avg.toFixed(1)} dnů</strong></span>
+                              <span style="font-size: 0.9em; color: #555;">Průměrné zpoždění: <strong>${avgDelay} dnů</strong></span>
                           </td>
                       </tr>
                   `;
               } else {
                   // SEZNAM (max 5)
-                  delays.forEach(d => {
-                      let daysText = d.dny + " dnů";
-                      tbody.innerHTML += `<tr><td>${d.datum}</td><td>${d.cislo}</td><td style="font-weight:bold;">${daysText}</td><td>${d.duvod}</td></tr>`;
+                  delays.slice(0, 5).forEach(d => {
+                      tbody.innerHTML += `<tr><td>${d.datum}</td><td>${d.cislo}</td><td style="font-weight:bold;">${d.dny} dnů</td><td>${d.duvod}</td></tr>`;
                   });
               }
           }
       } catch(e) { console.warn("Chyba zpoždění:", e); }
 
-      // Aktualizace BOXU Zpoždění (5 / 100)
-      const boxDel = document.getElementById('boxDelays');
+      // Aktualizace BOXU Zpoždění
       const countEl = document.getElementById('countDelays');
-      
-      // Zobrazíme "Zpožděné / Celkem"
       countEl.innerHTML = `${delayCount} <span class="alert-sub">/ ${totalOrders}</span>`;
       
+      const boxDel = document.getElementById('boxDelays');
       boxDel.className = 'alert-box';
       if (delayCount === 0) boxDel.classList.add('status-ok');
       else boxDel.classList.add('status-warning');
@@ -306,12 +292,12 @@
                     datasets: [{ label: 'Výkon', data: [cData.Q1*100, cData.Q2*100, cData.Q3*100, cData.Q4*100], backgroundColor: '#3498db' }]
                 },
                 options: { 
-                    plugins: { legend: { display: false } }, // SKRYTÁ LEGENDA
+                    plugins: { legend: { display: false } },
                     scales: { 
                         y: { 
                             beginAtZero: true, 
                             max: 100,
-                            ticks: { callback: function(value) { return value + " %" } } // PROCENTA NA OSE Y
+                            ticks: { callback: function(value) { return value + " %" } }
                         } 
                     }, 
                     maintainAspectRatio: false 
