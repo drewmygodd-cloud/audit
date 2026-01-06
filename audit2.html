@@ -6,7 +6,6 @@
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* ZÁKLADNÍ STYLY - CLEAN MONOCHROME */
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f0f0; margin: 0; padding: 20px; color: #000; }
     .page { background: white; width: 210mm; min-height: 297mm; margin: 0 auto 20px auto; padding: 20mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); box-sizing: border-box; }
     
@@ -18,32 +17,19 @@
       .page-break { page-break-before: always; }
     }
 
-    /* Hlavička */
     .header { border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
     .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; color: #000; }
     .logo-img { height: 90px; width: auto; max-width: 300px; object-fit: contain; margin-bottom: 15px; display: block; }
 
-    /* DASHBOARD GRID */
-    .dashboard-grid { 
-        display: grid; 
-        grid-template-columns: 1.8fr 1.5fr 0.8fr 1fr; 
-        gap: 15px; 
-        margin-bottom: 30px; 
-    }
-    
-    /* Boxy */
+    .dashboard-grid { display: grid; grid-template-columns: 1.8fr 1.5fr 0.8fr 1fr; gap: 15px; margin-bottom: 30px; }
     .score-box { background: #f4f4f4; border-left: 5px solid #000; padding: 15px; display: flex; flex-direction: column; justify-content: center; }
     .value { font-size: 32px; font-weight: bold; color: #000; margin-top: 5px; }
-    
     .alert-box { background: #fff; border: 1px solid #000; padding: 10px; text-align: center; display: flex; flex-direction: column; justify-content: center; position: relative; }
     .alert-num { font-size: 24px; font-weight: bold; line-height: 1.1; color: #000; }
     .alert-sub { font-size: 14px; font-weight: normal; color: #555; }
     .alert-label { font-size: 11px; text-transform: uppercase; color: #000; margin-top: 5px; letter-spacing: 1px; }
-    
-    /* Statusy (černobílé) */
     .status-ok, .status-warning, .status-danger { border-color: #000; background: #fff; color: #000; }
 
-    /* Tabulky */
     table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
     th, td { border: 1px solid #000; padding: 8px; text-align: left; color: #000; }
     th { background-color: #f4f4f4; font-size: 12px; font-weight: bold; }
@@ -52,7 +38,6 @@
     .claim-header { background-color: #eee; color: #000; border-bottom: 2px solid #000; }
     .claim-type { font-weight: bold; color: #000; font-size: 11px; background: #fff; padding: 2px 5px; border: 1px solid #000; border-radius: 3px; }
 
-    /* Trend (Barevný) */
     .trend-up { color: #27ae60; }
     .trend-down { color: #c0392b; }
     .trend-neutral { color: #7f8c8d; }
@@ -125,7 +110,6 @@
   </div>
 
   <div class="page page-break">
-    
     <h3>Kvartální hodnocení</h3>
     <div class="chart-container"><canvas id="quarterChart"></canvas></div>
 
@@ -210,23 +194,31 @@
       safeSet('softQual', formatPercent(mapped.QualCol));
       safeSet('softBon', formatPercent(mapped.BonCol));
 
-      // Trend "vs Rok"
+      // --- OPRAVA TREND LOGIKY ---
       const tEl = document.getElementById('trendDisplay');
-      if (tEl && typeof mapped.TrendCol === 'number') {
-          const diff = (mapped.TrendCol*100).toFixed(1);
-          let trendHtml = "";
-          
-          if (mapped.TrendCol > 0.001) trendHtml = `<span class="trend-up">↗ +${diff}%</span>`;
-          else if (mapped.TrendCol < -0.001) trendHtml = `<span class="trend-down">↘ ${diff}%</span>`;
-          else trendHtml = `<span class="trend-neutral">➡ beze změny</span>`;
-          
-          const curYear = mapped.YearCol || new Date().getFullYear();
-          const prevYear = curYear - 1;
-          
-          tEl.innerHTML = `${trendHtml} <span style="color:#555; margin-left:5px; font-size: 0.9em;">vs ${prevYear}</span>`;
+      if (tEl) {
+          if (typeof mapped.TrendCol === 'number') {
+              const diff = (mapped.TrendCol * 100).toFixed(1);
+              let trendHtml = "";
+              
+              if (mapped.TrendCol > 0.001) {
+                  trendHtml = '<span class="trend-up">↗ +' + diff + '%</span>';
+              } else if (mapped.TrendCol < -0.001) {
+                  trendHtml = '<span class="trend-down">↘ ' + diff + '%</span>';
+              } else {
+                  trendHtml = '<span class="trend-neutral">➡ beze změny</span>';
+              }
+              
+              const curYear = mapped.YearCol || new Date().getFullYear();
+              const prevYear = curYear - 1;
+              
+              // Bezpečné spojení řetězců
+              tEl.innerHTML = trendHtml + ' <span style="color:#555; margin-left:5px; font-size: 0.9em;">vs ' + prevYear + '</span>';
+          } else {
+              tEl.innerText = "";
+          }
       }
 
-      // Zpoždění + Statistika
       let delayCount = 0;
       let totalOrders = 0;
       try {
@@ -247,34 +239,30 @@
               document.getElementById('noDelaysMsg').style.display = 'none';
               
               if (delayCount > 5) {
-                  tbody.innerHTML = `
-                      <tr style="background-color: #f9f9f9; height: 50px;">
-                          <td colspan="4" style="text-align: center; vertical-align: middle;">
-                              <strong>Celkem ${delayCount} zpožděných objednávek</strong><br>
-                              <span style="font-size: 0.9em; color: #555;">(Z celkového počtu ${totalOrders} objednávek)</span><br>
-                              <span style="font-size: 0.9em; color: #555;">Průměrné zpoždění: <strong>${avgDelay} dnů</strong></span>
-                          </td>
-                      </tr>
-                  `;
+                  tbody.innerHTML = '<tr style="background-color: #f9f9f9; height: 50px;">' +
+                      '<td colspan="4" style="text-align: center; vertical-align: middle;">' +
+                      '<strong>Celkem ' + delayCount + ' zpožděných objednávek</strong><br>' +
+                      '<span style="font-size: 0.9em; color: #555;">(Z celkového počtu ' + totalOrders + ' objednávek)</span><br>' +
+                      '<span style="font-size: 0.9em; color: #555;">Průměrné zpoždění: <strong>' + avgDelay + ' dnů</strong></span>' +
+                      '</td></tr>';
               } else {
                   delays.slice(0, 5).forEach(d => {
-                      tbody.innerHTML += `<tr><td>${d.datum}</td><td>${d.cislo}</td><td style="font-weight:bold;">${d.dny} dnů</td><td>${d.duvod}</td></tr>`;
+                      tbody.innerHTML += '<tr><td>' + d.datum + '</td><td>' + d.cislo + '</td><td style="font-weight:bold;">' + d.dny + ' dnů</td><td>' + d.duvod + '</td></tr>';
                   });
               }
           }
-      } catch(e) { console.warn("Delay error", e); }
+      } catch(e) {}
 
       const countEl = document.getElementById('countDelays');
-      if (countEl) countEl.innerHTML = `${delayCount} <span class="alert-sub">/ ${totalOrders}</span>`;
+      if(countEl) countEl.innerHTML = delayCount + ' <span class="alert-sub">/ ' + totalOrders + '</span>';
       
       const boxDel = document.getElementById('boxDelays');
-      if (boxDel) {
+      if(boxDel) {
           boxDel.className = 'alert-box';
           if (delayCount === 0) boxDel.classList.add('status-ok');
           else boxDel.classList.add('status-warning');
       }
 
-      // Reklamace
       let claimCount = 0;
       try {
           const cBody = document.getElementById('tableClaimsBody');
@@ -285,22 +273,21 @@
           if (claimCount > 0) {
               document.getElementById('sectionClaims').style.display = 'block';
               claims.forEach(c => {
-                  cBody.innerHTML += `<tr><td>${c.datum}</td><td><strong>${c.cislo}</strong></td><td><span class="claim-type">${c.typ}</span></td><td>${c.duvod}</td></tr>`;
+                  cBody.innerHTML += '<tr><td>' + c.datum + '</td><td><strong>' + c.cislo + '</strong></td><td><span class="claim-type">' + c.typ + '</span></td><td>' + c.duvod + '</td></tr>';
               });
           } else {
               document.getElementById('sectionClaims').style.display = 'none';
           }
-      } catch(e) { console.warn("Claim error", e); }
+      } catch(e) {}
 
       safeSet('countClaims', claimCount);
       const boxClm = document.getElementById('boxClaims');
-      if (boxClm) {
+      if(boxClm) {
           boxClm.className = 'alert-box';
           if (claimCount > 0) boxClm.classList.add('status-danger');
           else boxClm.classList.add('status-ok');
       }
 
-      // Graf
       try {
         let cData = mapped.ChartData ? JSON.parse(mapped.ChartData) : {Q1:0,Q2:0,Q3:0,Q4:0};
         const ctx = document.getElementById('quarterChart');
@@ -315,11 +302,7 @@
                 options: { 
                     plugins: { legend: { display: false } },
                     scales: { 
-                        y: { 
-                            beginAtZero: true, 
-                            max: 100,
-                            ticks: { callback: function(value) { return value + " %" } }
-                        } 
+                        y: { beginAtZero: true, max: 100, ticks: { callback: function(value) { return value + " %" } } } 
                     }, 
                     maintainAspectRatio: false 
                 }
