@@ -217,13 +217,21 @@
       safeSet('softQual', formatPercent(mapped.QualCol));
       safeSet('softBon', formatPercent(mapped.BonCol));
 
-      // Trend
+      // Trend (Změna: přidán rok)
       const tEl = document.getElementById('trendDisplay');
       if (tEl && typeof mapped.TrendCol === 'number') {
           const diff = (mapped.TrendCol*100).toFixed(1);
-          if (mapped.TrendCol > 0.001) tEl.innerHTML = `<span class="trend-up">↗ +${diff}%</span>`;
-          else if (mapped.TrendCol < -0.001) tEl.innerHTML = `<span class="trend-down">↘ ${diff}%</span>`;
-          else tEl.innerHTML = `<span class="trend-neutral">➡ beze změny</span>`;
+          let trendHtml = "";
+          
+          if (mapped.TrendCol > 0.001) trendHtml = `<span class="trend-up">↗ +${diff}%</span>`;
+          else if (mapped.TrendCol < -0.001) trendHtml = `<span class="trend-down">↘ ${diff}%</span>`;
+          else trendHtml = `<span class="trend-neutral">➡ beze změny</span>`;
+          
+          // Získání roků pro popisek
+          const curYear = mapped.YearCol || new Date().getFullYear();
+          const prevYear = curYear - 1;
+          
+          tEl.innerHTML = `${trendHtml} <span style="color:#555; margin-left:5px; font-size: 0.9em;">${prevYear}/${curYear}</span>`;
       }
 
       // ZPOŽDĚNÍ
