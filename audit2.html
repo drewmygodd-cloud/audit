@@ -23,8 +23,14 @@
     .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; color: #000; }
     .logo-img { height: 90px; width: auto; max-width: 300px; object-fit: contain; margin-bottom: 15px; display: block; }
 
-    /* DASHBOARD GRID */
-    .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+    /* DASHBOARD GRID - UPRAVENO PRO 4 SLOUPCE */
+    .dashboard-grid { 
+        display: grid; 
+        /* Skóre je širší (1.8), Obrat taky (1.5), zbytek menší */
+        grid-template-columns: 1.8fr 1.5fr 0.8fr 1fr; 
+        gap: 15px; 
+        margin-bottom: 30px; 
+    }
     
     /* Hlavní skóre */
     .score-box { background: #f4f4f4; border-left: 5px solid #000; padding: 15px; display: flex; flex-direction: column; justify-content: center; }
@@ -32,8 +38,8 @@
     
     /* Alert Boxy */
     .alert-box { background: #fff; border: 1px solid #000; padding: 10px; text-align: center; display: flex; flex-direction: column; justify-content: center; position: relative; }
-    .alert-num { font-size: 28px; font-weight: bold; line-height: 1; color: #000; }
-    .alert-sub { font-size: 16px; font-weight: normal; color: #555; }
+    .alert-num { font-size: 24px; font-weight: bold; line-height: 1.1; color: #000; } /* Zmenšeno písmo aby se vešlo */
+    .alert-sub { font-size: 14px; font-weight: normal; color: #555; }
     .alert-label { font-size: 11px; text-transform: uppercase; color: #000; margin-top: 5px; letter-spacing: 1px; }
     
     /* Statusy */
@@ -83,6 +89,11 @@
             <span style="font-size: 12px; color: #000; text-transform: uppercase;">Hodnocení</span>
             <div class="value" id="totalScore">0 %</div>
             <div id="trendDisplay" style="font-size: 14px; margin-top: 5px;"></div>
+        </div>
+
+        <div class="alert-box">
+            <div class="alert-num" id="turnoverVal">0 Kč</div>
+            <div class="alert-label">Roční obrat</div>
         </div>
 
         <div class="alert-box" id="boxClaims">
@@ -140,6 +151,13 @@
   <script>
     function safeSet(id, val) { const el=document.getElementById(id); if(el) el.innerText=val; }
     function formatPercent(val) { if(typeof val==='number') return (val*100).toFixed(1)+" %"; return "---"; }
+    // Formátování měny
+    function formatCurrency(val) {
+        if(typeof val === 'number') {
+            return val.toLocaleString('cs-CZ', { style: 'currency', currency: 'CZK', maximumFractionDigits: 0 });
+        }
+        return "---";
+    }
 
     document.getElementById('currentDate').innerText = new Date().toLocaleDateString('cs-CZ');
     let myChart = null;
@@ -156,6 +174,9 @@
         { name: "InnoCol", title: "Inovace", type: 'Numeric'},
         { name: "QualCol", title: "Kvalifikace", type: 'Numeric'},
         { name: "BonCol", title: "Bonita", type: 'Numeric'},
+        // NOVÝ SLOUPEC
+        { name: "TurnoverCol", title: "Obrat", type: 'Numeric'},
+        
         { name: "ChartData", title: "Graf JSON", type: 'Text'},
         { name: "DelayData", title: "Zpoždění JSON", type: 'Text'},
         { name: "ClaimData", title: "Reklamace JSON", type: 'Text'},
@@ -182,9 +203,11 @@
           }
       }
 
-      // Skóre
       const scoreEl = document.getElementById('totalScore');
       if (scoreEl) scoreEl.innerText = formatPercent(mapped.TotalCol);
+
+      // OBRAT
+      safeSet('turnoverVal', formatCurrency(mapped.TurnoverCol));
 
       safeSet('hardData', formatPercent(mapped.HardCol));
       safeSet('softEnv', formatPercent(mapped.EnvCol));
@@ -203,20 +226,17 @@
           else tEl.innerHTML = `<span class="trend-neutral">➡ beze změny</span>`;
       }
 
-      // --- ZPOŽDĚNÍ + STATISTIKA (Nová logika z Pythonu) ---
+      // ZPOŽDĚNÍ
       let delayCount = 0;
       let totalOrders = 0;
       try {
           const tbody = document.getElementById('delayTableBody');
           tbody.innerHTML = "";
-          
           let parsedData = mapped.DelayData ? JSON.parse(mapped.DelayData) : {};
           
-          // Podpora pro nové Python data (bezpečně)
           let delays = parsedData.seznam || [];
           delayCount = parsedData.zpozdene || 0;
           totalOrders = parsedData.celkem || 0;
-          // Pokud Python posílá už hotový průměr, můžeme ho použít (parsedData.prumer)
           let avgDelay = parsedData.prumer || 0;
           
           if (delayCount === 0) {
@@ -227,7 +247,6 @@
               document.getElementById('noDelaysMsg').style.display = 'none';
               
               if (delayCount > 5) {
-                  // SOUHRN (S použitím přesných dat z Pythonu)
                   tbody.innerHTML = `
                       <tr style="background-color: #f9f9f9; height: 50px;">
                           <td colspan="4" style="text-align: center; vertical-align: middle;">
@@ -238,24 +257,21 @@
                       </tr>
                   `;
               } else {
-                  // SEZNAM (max 5)
                   delays.slice(0, 5).forEach(d => {
                       tbody.innerHTML += `<tr><td>${d.datum}</td><td>${d.cislo}</td><td style="font-weight:bold;">${d.dny} dnů</td><td>${d.duvod}</td></tr>`;
                   });
               }
           }
-      } catch(e) { console.warn("Chyba zpoždění:", e); }
+      } catch(e) {}
 
-      // Aktualizace BOXU Zpoždění
       const countEl = document.getElementById('countDelays');
       countEl.innerHTML = `${delayCount} <span class="alert-sub">/ ${totalOrders}</span>`;
-      
       const boxDel = document.getElementById('boxDelays');
       boxDel.className = 'alert-box';
       if (delayCount === 0) boxDel.classList.add('status-ok');
       else boxDel.classList.add('status-warning');
 
-      // --- REKLAMACE ---
+      // REKLAMACE
       let claimCount = 0;
       try {
           const cBody = document.getElementById('tableClaimsBody');
@@ -279,7 +295,7 @@
       if (claimCount > 0) boxClm.classList.add('status-danger');
       else boxClm.classList.add('status-ok');
 
-      // Graf
+      // GRAF
       try {
         let cData = mapped.ChartData ? JSON.parse(mapped.ChartData) : {Q1:0,Q2:0,Q3:0,Q4:0};
         const ctx = document.getElementById('quarterChart');
