@@ -5,7 +5,7 @@
   <title>Kvartální Hodnocení</title>
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   <style>
-    /* --- ZÁKLAD --- */
+    /* --- ZÁKLADNÍ STYLY --- */
     body { 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
       background-color: #f0f0f0; 
@@ -17,19 +17,19 @@
     .page { 
       background: white; 
       width: 210mm; 
-      height: 297mm; /* Fixní výška pro A4 */
+      height: 297mm; 
       margin: 0 auto 20px auto; 
       padding: 20mm; 
       box-shadow: 0 0 10px rgba(0,0,0,0.1); 
       box-sizing: border-box; 
-      position: relative; /* Pro patičku */
+      position: relative; 
     }
     
     /* Tisková pravidla */
     @media print {
       body { background: none; padding: 0; }
       .page { 
-        width: 100%; height: 296mm; /* Drobná rezerva */
+        width: 100%; height: 296mm; 
         box-shadow: none; margin: 0; padding: 15mm; 
       }
       .no-print { display: none !important; }
@@ -46,19 +46,19 @@
     .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
     .meta-date { text-align: right; font-size: 14px; font-weight: bold; margin-top: 5px; }
 
-    /* --- DASHBOARD (Nový layout) --- */
+    /* --- DASHBOARD (Layout) --- */
     .dashboard-container {
       display: flex;
-      gap: 30px; /* Mezera mezi Skóre a Boxy */
+      gap: 30px;
       margin-bottom: 35px;
       align-items: stretch;
     }
 
-    /* LEVÁ ČÁST - SKÓRE (Styl Auditu) */
+    /* LEVÁ ČÁST - SKÓRE */
     .score-section {
-      flex: 0 0 30%; /* Šířka 30% */
+      flex: 0 0 30%;
       background: #f4f4f4;
-      border-left: 6px solid #000; /* Tlustá čára */
+      border-left: 6px solid #000;
       padding: 15px;
       display: flex;
       flex-direction: column;
@@ -67,18 +67,19 @@
     .score-val { font-size: 36px; font-weight: bold; line-height: 1; color: #000; }
     .score-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #555; margin-top: 5px; }
     
-    /* Trend pod skóre */
+    /* Trend */
     .trend-box { font-size: 13px; margin-top: 8px; font-weight: 500; }
-    .t-up { color: #27ae60; }   /* Zelená */
-    .t-down { color: #c0392b; } /* Červená */
-    .t-neut { color: #7f8c8d; } /* Šedá */
+    /* Barvy trendu necháme jemné (text), nebo lze dát také černé, pokud chceš */
+    .t-up { color: #27ae60; }
+    .t-down { color: #c0392b; }
+    .t-neut { color: #7f8c8d; }
 
-    /* PRAVÁ ČÁST - KPI BOXY */
+    /* PRAVÁ ČÁST - BOXY */
     .kpi-section {
       flex: 1;
       display: grid;
-      grid-template-columns: repeat(3, 1fr); /* 3 sloupce */
-      gap: 10px; /* Boxy blízko u sebe */
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
     }
 
     .kpi-box {
@@ -100,23 +101,17 @@
     
     .problem-text { font-weight: bold; text-decoration: underline; }
 
-    /* --- PATIČKA (Fixní dole) --- */
+    /* --- PATIČKA --- */
     .footer {
       position: absolute;
-      bottom: 15mm;
-      left: 20mm; /* Musí odpovídat paddingu stránky */
-      right: 20mm;
+      bottom: 15mm; left: 20mm; right: 20mm;
       border-top: 1px solid #000;
       padding-top: 5px;
       font-size: 10px;
       color: #333;
-      display: flex;
-      justify-content: space-between;
+      display: flex; justify-content: space-between;
     }
-    /* Úprava patičky pro tisk */
-    @media print {
-      .footer { bottom: 15mm; left: 15mm; right: 15mm; }
-    }
+    @media print { .footer { bottom: 15mm; left: 15mm; right: 15mm; } }
 
     /* Tlačítko */
     .btn-print { 
@@ -154,18 +149,19 @@
     try { data = JSON.parse(rawData); } catch (e) { return; }
     const h = data.hlavicka;
 
-    // Logika Trendu
+    // Logika Trendu (šipky + text)
     let trendHtml = '';
     if (h.trend_label) {
-        let val = h.trend_val; // Rozdíl v procentech
+        let val = h.trend_val;
         let arrow = '➡';
         let cls = 't-neut';
         let sign = '';
 
         if (val > 0.1) { arrow = '↗'; cls = 't-up'; sign = '+'; }
-        else if (val < -0.1) { arrow = '↘'; cls = 't-down'; sign = ''; } // minus je v čísle
+        else if (val < -0.1) { arrow = '↘'; cls = 't-down'; sign = ''; }
 
-        trendHtml = `<div class="trend-box ${cls}">${arrow} ${sign}${val.toFixed(1)} % <span style="color:#000; font-weight:normal; margin-left:3px;">(${h.trend_label})</span></div>`;
+        // ZDE BYLA ZMĚNA: Odstraněny závorky kolem h.trend_label
+        trendHtml = `<div class="trend-box ${cls}">${arrow} ${sign}${val.toFixed(1)} % <span style="color:#000; font-weight:normal; margin-left:3px;">${h.trend_label}</span></div>`;
     }
 
     let html = `
@@ -193,60 +189,4 @@
             <span class="kpi-lbl">Obrat</span>
           </div>
           <div class="kpi-box">
-            <span class="kpi-num">${h.pocet_celkem}</span>
-            <span class="kpi-lbl">Objednávek</span>
-          </div>
-          <div class="kpi-box" style="${h.pocet_zpozdenych > 0 ? 'background:#fff0f0; border-color:#c0392b;' : ''}">
-            <span class="kpi-num" style="${h.pocet_zpozdenych > 0 ? 'color:#c0392b;' : ''}">${h.pocet_zpozdenych}</span>
-            <span class="kpi-lbl">Problémových</span>
-          </div>
-        </div>
-      </div>
-
-      <h3 style="font-size:14px; text-transform:uppercase; border-bottom:1px solid #ccc; margin-bottom:5px;">Detailní přehled</h3>
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 12%">Datum</th>
-            <th style="width: 15%">Objednávka</th>
-            <th style="width: 18%; text-align: right;">Cena</th>
-            <th style="width: 15%; padding-left: 10px;">Status</th>
-            <th style="width: 40%">Poznámka / Problém</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-
-    if (data.radky && data.radky.length > 0) {
-      data.radky.forEach(r => {
-        let probContent = r.je_problem ? `<span class="problem-text">${r.text_problemu}</span>` : '';
-        html += `
-          <tr>
-            <td>${r.datum}</td>
-            <td>${r.cislo}</td>
-            <td style="text-align: right;">${r.cena}</td>
-            <td style="padding-left: 10px;">${r.status}</td>
-            <td>${probContent}</td>
-          </tr>
-        `;
-      });
-    } else {
-        html += `<tr><td colspan="5" style="text-align:center; padding: 20px;">Žádné objednávky.</td></tr>`;
-    }
-
-    html += `
-        </tbody>
-      </table>
-
-      <div class="footer">
-        <span>Interní report hodnocení dodavatelů</span>
-        <span>Vytištěno: ${new Date().toLocaleDateString('cs-CZ')}</span>
-      </div>
-    `;
-
-    container.innerHTML = html;
-  });
-</script>
-
-</body>
-</html>
+            <span class="kpi-num">${h.poc
