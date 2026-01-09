@@ -2,56 +2,81 @@
 <html lang="cs">
 <head>
   <meta charset="UTF-8">
-  <title>Kvartální Report - B&W</title>
+  <title>Kvartální Report</title>
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   <style>
-    /* ZÁKLADNÍ NASTAVENÍ */
+    /* RESET A ZÁKLAD */
+    * { box-sizing: border-box; }
+    
     body { 
-      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-      background: #f0f0f0; 
-      padding: 20px; 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      background-color: #f4f4f4; /* Šedé pozadí na obrazovce */
       margin: 0;
-      color: #000; /* Černý text */
+      padding: 20px;
+      color: #000;
+    }
+
+    /* TLAČÍTKO PRO TISK (Na papíře zmizí) */
+    .print-btn-container {
+      text-align: right;
+      max-width: 210mm;
+      margin: 0 auto 10px auto;
     }
     
-    /* STRÁNKA A4 */
+    button.print-btn {
+      background-color: #333;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-weight: bold;
+      border-radius: 4px;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    button.print-btn:hover { background-color: #000; }
+
+    /* KONTEJNER STRÁNKY (Vzhled A4 na obrazovce) */
     .page {
       background: white;
-      width: 210mm;
-      min-height: 297mm;
+      max-width: 210mm;
+      min-height: 297mm; /* Aby to vypadalo jako papír */
       margin: 0 auto;
-      padding: 15mm;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-      box-sizing: border-box; 
+      padding: 15mm;     /* Vnitřní okraje obsahu */
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
 
     /* HLAVIČKA */
     header {
+      border-bottom: 2px solid #000;
+      padding-bottom: 15px;
+      margin-bottom: 20px;
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      border-bottom: 3px solid #000; /* Černá linka */
-      padding-bottom: 15px;
-      margin-bottom: 25px;
+      align-items: flex-end;
     }
-    .header-left h1 { margin: 0; font-size: 26px; text-transform: uppercase; letter-spacing: 1px; }
-    .header-left .sub { font-size: 14px; color: #444; margin-top: 5px; }
-    
-    .score-badge {
-      text-align: center;
-      border: 2px solid #000;
-      padding: 8px 20px;
-      min-width: 80px;
-    }
-    .score-val { font-size: 30px; font-weight: bold; display: block; line-height: 1; }
-    .score-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; display: block;}
 
-    /* KPI BOX (Statistiky) */
+    h1 { margin: 0; font-size: 24px; text-transform: uppercase; color: #000; letter-spacing: 0.5px; }
+    .sub { font-size: 14px; color: #444; margin-top: 5px; }
+
+    .score-box { 
+      border: 2px solid #000; 
+      padding: 5px 15px; 
+      text-align: center; 
+      min-width: 90px;
+    }
+    .score-val { font-size: 26px; font-weight: bold; display: block; line-height: 1.2; }
+    .score-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+
+    /* KPI LIŠTA */
     .kpi-bar {
       display: flex;
       border: 1px solid #999;
       padding: 15px 0;
-      margin-bottom: 30px;
+      margin-bottom: 25px;
+      background-color: #fff;
     }
     .kpi-item {
       flex: 1;
@@ -59,54 +84,84 @@
       border-right: 1px solid #ccc;
     }
     .kpi-item:last-child { border-right: none; }
-    .kpi-val { font-size: 18px; font-weight: bold; color: #000; display: block; }
-    .kpi-label { font-size: 11px; color: #555; text-transform: uppercase; margin-top: 4px; display: block;}
+    .kpi-val { font-weight: bold; font-size: 16px; display: block; margin-bottom: 2px; }
+    .kpi-lbl { font-size: 10px; text-transform: uppercase; color: #555; }
 
     /* TABULKA */
-    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; }
     
     th { 
       text-align: left; 
       border-bottom: 2px solid #000; 
-      padding: 8px; 
-      font-weight: bold; 
+      padding: 8px 6px; 
       text-transform: uppercase;
-      font-size: 11px;
+      font-weight: bold;
     }
     
     td { 
       border-bottom: 1px solid #ccc; 
-      padding: 8px; 
-      vertical-align: top; 
-      color: #000; 
-    }
-    
-    /* Vylepšení čitelnosti řádků */
-    tr:nth-child(even) { background-color: #f9f9f9; }
-
-    /* Styl sloupce s problémy */
-    .problem-text {
-      font-weight: bold;
-      text-transform: uppercase;
-      font-size: 11px;
+      padding: 6px; 
+      vertical-align: top;
+      color: #000;
     }
 
-    /* TISK (CSS pro Ctrl+P) */
+    /* Proužkování pro lepší čitelnost */
+    tr:nth-child(even) { background-color: #f2f2f2; }
+
+    /* Styl problémů - jen tučně a podtrženě */
+    .problem-text { font-weight: bold; text-decoration: underline; }
+
+    /* PATIČKA */
+    .footer {
+      margin-top: 40px;
+      border-top: 1px solid #000;
+      padding-top: 5px;
+      font-size: 10px;
+      color: #333;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* --- NASTAVENÍ PRO TISK --- */
     @media print {
-      body { background: white; padding: 0; }
-      .page { box-shadow: none; margin: 0; padding: 0; width: 100%; border: none; }
-      tr:nth-child(even) { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; }
-      header { border-bottom: 2px solid black; }
-      /* Skryjeme tlačítka nebo scrollbary */
+      /* Skryjeme tlačítko a okolí */
+      .print-btn-container, .print-btn { display: none !important; }
+      
+      body { 
+        background-color: white; 
+        padding: 0; 
+        margin: 0;
+        -webkit-print-color-adjust: exact; /* Vynutí tisk pozadí (šedé řádky) */
+        print-color-adjust: exact;
+      }
+
+      /* Stránka se roztáhne na celou tiskovou oblast */
+      .page {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0; /* Necháme okraje na tiskárně nebo jen minimální */
+        box-shadow: none;
+        border: none;
+        min-height: auto;
+      }
+
+      /* Zajistíme, aby se tabulka nerozbila přes stránky ošklivě */
+      table { page-break-inside: auto; }
+      tr { page-break-inside: avoid; page-break-after: auto; }
     }
   </style>
 </head>
 <body>
 
-<div class="page" id="report-container">
-  <div style="text-align: center; padding-top: 50px; color: #999;">
-    Načítám data...
-  </div>
+<div class="print-btn-container">
+  <button class="print-btn" onclick="window.print()">
+    🖨️ TISKNOUT WIDGET
+  </button>
+</div>
+
+<div class="page" id="report">
+  <div style="text-align: center; padding-top: 100px; color: #666;">Načítám data...</div>
 </div>
 
 <script>
@@ -116,11 +171,11 @@
   });
 
   grist.onRecord(function(record) {
-    const container = document.getElementById('report-container');
+    const container = document.getElementById('report');
     const rawData = record.Tiskova_Data;
 
     if (!rawData) {
-      container.innerHTML = '<div style="text-align: center; padding-top: 50px;">Žádná data pro zobrazení.</div>';
+      container.innerHTML = '<div style="text-align:center; padding-top:50px;">Žádná data pro zobrazení.</div>';
       return;
     }
 
@@ -128,37 +183,36 @@
     try {
       data = JSON.parse(rawData);
     } catch (e) {
-      container.innerHTML = '<div style="color:red; padding:20px;">Chyba dat (JSON).</div>';
+      container.innerHTML = '<div style="color:red; text-align:center;">Chyba dat JSON</div>';
       return;
     }
 
     const h = data.hlavicka;
 
-    // Generování HTML
     let html = `
       <header>
-        <div class="header-left">
+        <div>
           <h1>${h.dodavatel}</h1>
           <div class="sub">Kvartální hodnocení: <strong>${h.obdobi}</strong></div>
         </div>
-        <div class="score-badge">
+        <div class="score-box">
           <span class="score-val">${h.skore_procenta} %</span>
-          <span class="score-label">Výsledek</span>
+          <span class="score-lbl">Výsledek</span>
         </div>
       </header>
 
       <div class="kpi-bar">
         <div class="kpi-item">
           <span class="kpi-val">${h.obrat}</span>
-          <span class="kpi-label">Celkový obrat</span>
+          <span class="kpi-lbl">Obrat</span>
         </div>
         <div class="kpi-item">
           <span class="kpi-val">${h.pocet_celkem}</span>
-          <span class="kpi-label">Počet objednávek</span>
+          <span class="kpi-lbl">Objednávek</span>
         </div>
         <div class="kpi-item">
           <span class="kpi-val">${h.pocet_zpozdenych}</span>
-          <span class="kpi-label">Zpožděno / Problém</span>
+          <span class="kpi-lbl">Problémových</span>
         </div>
       </div>
 
@@ -166,10 +220,10 @@
         <thead>
           <tr>
             <th style="width: 12%">Datum</th>
-            <th style="width: 15%">Číslo obj.</th>
+            <th style="width: 15%">Objednávka</th>
             <th style="width: 18%; text-align: right;">Cena</th>
-            <th style="width: 15%; padding-left: 20px;">Status</th>
-            <th style="width: 40%">Poznámka / Problém</th>
+            <th style="width: 15%; padding-left: 15px;">Status</th>
+            <th style="width: 40%">Poznámka</th>
           </tr>
         </thead>
         <tbody>
@@ -177,33 +231,29 @@
 
     if (data.radky && data.radky.length > 0) {
       data.radky.forEach(r => {
-        // Žádné barvy, jen čistý text
-        let problemHtml = '';
-        if (r.je_problem) {
-            // Pokud je problém, vypíšeme ho tučně. Žádné emoji.
-            problemHtml = `<span class="problem-text">${r.text_problemu}</span>`;
-        }
-
+        // Pokud je problém, použijeme span s třídou, jinak prázdno
+        let probContent = r.je_problem ? `<span class="problem-text">${r.text_problemu}</span>` : '';
+        
         html += `
           <tr>
             <td>${r.datum}</td>
             <td>${r.cislo}</td>
             <td style="text-align: right;">${r.cena}</td>
-            <td style="padding-left: 20px;">${r.status}</td>
-            <td>${problemHtml}</td>
+            <td style="padding-left: 15px;">${r.status}</td>
+            <td>${probContent}</td>
           </tr>
         `;
       });
     } else {
-        html += `<tr><td colspan="5" style="text-align:center; padding: 20px;">Žádné objednávky v tomto období.</td></tr>`;
+        html += `<tr><td colspan="5" style="text-align:center; padding: 20px;">Žádné záznamy v tomto období.</td></tr>`;
     }
 
     html += `
         </tbody>
       </table>
 
-      <div style="margin-top: 50px; font-size: 11px; color: #000; border-top: 1px solid #ccc; padding-top: 10px; display: flex; justify-content: space-between;">
-        <span>Interní report kvality dodavatelů</span>
+      <div class="footer">
+        <span>Interní report kvality</span>
         <span>Vytištěno: ${new Date().toLocaleDateString('cs-CZ')}</span>
       </div>
     `;
