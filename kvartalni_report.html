@@ -2,7 +2,7 @@
 <html lang="cs">
 <head>
   <meta charset="UTF-8">
-  <title>Kvartální Report</title>
+  <title>Kvartální Report - B&W</title>
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   <style>
     /* ZÁKLADNÍ NASTAVENÍ */
@@ -11,10 +11,10 @@
       background: #f0f0f0; 
       padding: 20px; 
       margin: 0;
-      color: #333;
+      color: #000; /* Černý text */
     }
     
-    /* "PAPÍR" A4 */
+    /* STRÁNKA A4 */
     .page {
       background: white;
       width: 210mm;
@@ -30,61 +30,74 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 2px solid #333;
+      border-bottom: 3px solid #000; /* Černá linka */
       padding-bottom: 15px;
-      margin-bottom: 20px;
+      margin-bottom: 25px;
     }
-    .header-left h1 { margin: 0; font-size: 26px; text-transform: uppercase; color: #2c3e50; }
-    .header-left .sub { font-size: 16px; color: #666; margin-top: 5px; }
+    .header-left h1 { margin: 0; font-size: 26px; text-transform: uppercase; letter-spacing: 1px; }
+    .header-left .sub { font-size: 14px; color: #444; margin-top: 5px; }
     
     .score-badge {
       text-align: center;
-      border: 3px solid #333;
-      padding: 5px 15px;
-      border-radius: 8px;
+      border: 2px solid #000;
+      padding: 8px 20px;
+      min-width: 80px;
     }
-    .score-val { font-size: 32px; font-weight: bold; display: block; line-height: 1; }
-    .score-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+    .score-val { font-size: 30px; font-weight: bold; display: block; line-height: 1; }
+    .score-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; display: block;}
 
-    /* KPI BOX (Manažerské shrnutí) */
+    /* KPI BOX (Statistiky) */
     .kpi-bar {
       display: flex;
-      background: #f8f9fa;
-      padding: 15px;
-      border-radius: 6px;
+      border: 1px solid #999;
+      padding: 15px 0;
       margin-bottom: 30px;
-      border: 1px solid #e9ecef;
     }
     .kpi-item {
       flex: 1;
       text-align: center;
-      border-right: 1px solid #ddd;
+      border-right: 1px solid #ccc;
     }
     .kpi-item:last-child { border-right: none; }
-    .kpi-val { font-size: 18px; font-weight: bold; color: #2c3e50; display: block; }
-    .kpi-label { font-size: 11px; color: #7f8c8d; text-transform: uppercase; margin-top: 4px; display: block;}
+    .kpi-val { font-size: 18px; font-weight: bold; color: #000; display: block; }
+    .kpi-label { font-size: 11px; color: #555; text-transform: uppercase; margin-top: 4px; display: block;}
 
     /* TABULKA */
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { text-align: left; background: #2c3e50; color: white; padding: 10px 8px; font-weight: 600; }
-    td { border-bottom: 1px solid #eee; padding: 8px; vertical-align: top; color: #444; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
     
-    /* Styl problémového řádku */
-    tr.problem-row td { background-color: #fff5f5; color: #c0392b; font-weight: 500; }
-    tr.problem-row td.note { font-weight: bold; }
+    th { 
+      text-align: left; 
+      border-bottom: 2px solid #000; 
+      padding: 8px; 
+      font-weight: bold; 
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+    
+    td { 
+      border-bottom: 1px solid #ccc; 
+      padding: 8px; 
+      vertical-align: top; 
+      color: #000; 
+    }
+    
+    /* Vylepšení čitelnosti řádků */
+    tr:nth-child(even) { background-color: #f9f9f9; }
 
-    .status-ok { color: #27ae60; font-weight: bold; }
-    .status-wait { color: #e67e22; font-weight: bold; }
-    .status-err { color: #c0392b; font-weight: bold; }
-    
+    /* Styl sloupce s problémy */
+    .problem-text {
+      font-weight: bold;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+
     /* TISK (CSS pro Ctrl+P) */
     @media print {
       body { background: white; padding: 0; }
-      .page { box-shadow: none; margin: 0; padding: 0; width: 100%; }
-      .kpi-bar { background: none !important; border: 1px solid #ccc; }
-      th { background: #ddd !important; color: black !important; -webkit-print-color-adjust: exact; }
-      tr.problem-row td { background-color: transparent !important; color: black !important; }
-      tr.problem-row td.note { text-decoration: underline; } 
+      .page { box-shadow: none; margin: 0; padding: 0; width: 100%; border: none; }
+      tr:nth-child(even) { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; }
+      header { border-bottom: 2px solid black; }
+      /* Skryjeme tlačítka nebo scrollbary */
     }
   </style>
 </head>
@@ -107,7 +120,7 @@
     const rawData = record.Tiskova_Data;
 
     if (!rawData) {
-      container.innerHTML = '<div style="text-align: center; padding-top: 50px; color: #999;">Žádná data pro zobrazení.</div>';
+      container.innerHTML = '<div style="text-align: center; padding-top: 50px;">Žádná data pro zobrazení.</div>';
       return;
     }
 
@@ -115,7 +128,7 @@
     try {
       data = JSON.parse(rawData);
     } catch (e) {
-      container.innerHTML = '<div style="color:red; padding:20px;">Chyba dat (JSON): ' + e.message + '</div>';
+      container.innerHTML = '<div style="color:red; padding:20px;">Chyba dat (JSON).</div>';
       return;
     }
 
@@ -144,9 +157,7 @@
           <span class="kpi-label">Počet objednávek</span>
         </div>
         <div class="kpi-item">
-          <span class="kpi-val" style="color: ${h.pocet_zpozdenych > 0 ? '#c0392b' : '#27ae60'}">
-            ${h.pocet_zpozdenych}
-          </span>
+          <span class="kpi-val">${h.pocet_zpozdenych}</span>
           <span class="kpi-label">Zpožděno / Problém</span>
         </div>
       </div>
@@ -154,11 +165,11 @@
       <table>
         <thead>
           <tr>
-            <th style="width: 10%">Datum</th>
+            <th style="width: 12%">Datum</th>
             <th style="width: 15%">Číslo obj.</th>
-            <th style="width: 15%; text-align: right;">Cena</th>
+            <th style="width: 18%; text-align: right;">Cena</th>
             <th style="width: 15%; padding-left: 20px;">Status</th>
-            <th style="width: 45%">Poznámka / Problém</th>
+            <th style="width: 40%">Poznámka / Problém</th>
           </tr>
         </thead>
         <tbody>
@@ -166,37 +177,32 @@
 
     if (data.radky && data.radky.length > 0) {
       data.radky.forEach(r => {
-        let rowClass = r.je_problem ? 'problem-row' : '';
-        
-        let statusHtml = r.status;
-        if (!r.je_problem) {
-             if (r.status.includes('Doručeno')) statusHtml = `<span class="status-ok">${r.status}</span>`;
-             else if (r.status.includes('Probíhá')) statusHtml = `<span class="status-wait">${r.status}</span>`;
-        } else {
-             statusHtml = `<span class="status-err">${r.status}</span>`;
+        // Žádné barvy, jen čistý text
+        let problemHtml = '';
+        if (r.je_problem) {
+            // Pokud je problém, vypíšeme ho tučně. Žádné emoji.
+            problemHtml = `<span class="problem-text">${r.text_problemu}</span>`;
         }
 
         html += `
-          <tr class="${rowClass}">
+          <tr>
             <td>${r.datum}</td>
             <td>${r.cislo}</td>
             <td style="text-align: right;">${r.cena}</td>
-            <td style="padding-left: 20px;">${statusHtml}</td>
-            <td class="note">
-              ${r.je_problem ? `⚠️ ${r.text_problemu}` : ''}
-            </td>
+            <td style="padding-left: 20px;">${r.status}</td>
+            <td>${problemHtml}</td>
           </tr>
         `;
       });
     } else {
-        html += `<tr><td colspan="5" style="text-align:center; padding: 20px;">Žádné objednávky.</td></tr>`;
+        html += `<tr><td colspan="5" style="text-align:center; padding: 20px;">Žádné objednávky v tomto období.</td></tr>`;
     }
 
     html += `
         </tbody>
       </table>
 
-      <div style="margin-top: 50px; font-size: 11px; color: #999; border-top: 1px solid #eee; padding-top: 10px; display: flex; justify-content: space-between;">
+      <div style="margin-top: 50px; font-size: 11px; color: #000; border-top: 1px solid #ccc; padding-top: 10px; display: flex; justify-content: space-between;">
         <span>Interní report kvality dodavatelů</span>
         <span>Vytištěno: ${new Date().toLocaleDateString('cs-CZ')}</span>
       </div>
