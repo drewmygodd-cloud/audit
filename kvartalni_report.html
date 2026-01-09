@@ -5,7 +5,7 @@
   <title>Kvartální Hodnocení</title>
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   <style>
-    /* --- STYLY PŘEVZATÉ Z ROČNÍHO AUDITU --- */
+    /* --- ZÁKLAD --- */
     body { 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
       background-color: #f0f0f0; 
@@ -14,7 +14,7 @@
       color: #000; 
     }
 
-    /* Definice stránky - přesně podle auditu */
+    /* Stránka - nastavení z Auditu */
     .page { 
       background: white; 
       width: 210mm; 
@@ -25,68 +25,80 @@
       box-sizing: border-box; 
     }
     
-    /* Tisková pravidla - to, co opraví okraje */
+    /* Tisková pravidla (okraje OK) */
     @media print {
       body { background: none; padding: 0; }
       .page { 
         width: 100%; 
         box-shadow: none; 
         margin: 0; 
-        padding: 15mm; /* Bezpečný okraj pro tiskárnu */
+        padding: 15mm; 
         height: auto; 
       }
       .no-print { display: none !important; }
-      /* Vynucení tisku pozadí (šedé řádky) */
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
 
-    /* Hlavička s logem */
+    /* --- HLAVIČKA --- */
     .header { 
       border-bottom: 2px solid #000; 
-      padding-bottom: 15px; 
-      margin-bottom: 30px; 
+      padding-bottom: 10px; 
+      margin-bottom: 20px; 
       display: flex; 
       justify-content: space-between; 
-      align-items: flex-end; /* Zarovnání dolů */
+      align-items: flex-start; /* Zarovnání nahoru */
     }
-    .header-left h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; color: #000; }
-    .logo-img { height: 60px; width: auto; max-width: 250px; object-fit: contain; margin-bottom: 10px; display: block; }
+    .header-left h1 { margin: 0; font-size: 22px; text-transform: uppercase; letter-spacing: 1px; color: #000; margin-top: 5px;}
+    .logo-img { height: 50px; width: auto; max-width: 200px; object-fit: contain; display: block; margin-bottom: 5px; }
     
-    .meta-box { text-align: right; font-size: 14px; }
-    .score-big { font-size: 28px; font-weight: bold; display: block; line-height: 1.2; }
+    .meta-date { text-align: right; font-size: 14px; font-weight: bold; margin-top: 5px; }
 
-    /* KPI Boxy (zjednodušené pro kvartál) */
+    /* --- DASHBOARD (KPI) --- */
     .dashboard-grid { 
-        display: flex; 
-        justify-content: space-between;
-        margin-bottom: 30px; 
-        border: 1px solid #000;
-        background: #fff;
+        display: grid;
+        grid-template-columns: 0.8fr 1fr 1fr 1fr; /* Skóre užší, zbytek stejně */
+        gap: 15px;
+        margin-bottom: 25px; 
     }
     
-    .kpi-item {
-      flex: 1;
+    /* Společný styl pro boxy */
+    .kpi-box {
+      border: 1px solid #000;
+      padding: 8px 5px; /* Menší padding = menší výška */
       text-align: center;
-      padding: 15px 5px;
-      border-right: 1px solid #000;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
-    .kpi-item:last-child { border-right: none; }
-    
-    .kpi-val { font-size: 20px; font-weight: bold; color: #000; display: block; }
-    .kpi-label { font-size: 11px; text-transform: uppercase; color: #555; margin-top: 5px; display: block; letter-spacing: 1px; }
 
-    /* Tabulka */
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-    th { background-color: #f4f4f4; font-weight: bold; text-transform: uppercase; border: 1px solid #000; padding: 8px; text-align: left; }
-    td { border: 1px solid #000; padding: 8px; vertical-align: top; color: #000; }
+    /* Specifický styl pro SKÓRE (první box) */
+    .score-box {
+      background: #f4f4f4; /* Mírně šedé pozadí pro odlišení */
+      border: 1px solid #000;
+      border-left: 4px solid #000; /* Tlustší levá čára jako v auditu */
+      padding: 8px 5px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .val-big { font-size: 22px; font-weight: bold; line-height: 1.1; }
+    .val-score { font-size: 26px; font-weight: bold; line-height: 1.1; }
+    .lbl { font-size: 10px; text-transform: uppercase; color: #555; margin-top: 3px; letter-spacing: 0.5px; }
+
+    /* --- TABULKA --- */
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+    th { background-color: #f4f4f4; font-weight: bold; text-transform: uppercase; border: 1px solid #000; padding: 6px; text-align: left; }
+    td { border: 1px solid #000; padding: 6px; vertical-align: top; color: #000; }
     
-    /* Zvýraznění problémů */
     .problem-text { font-weight: bold; text-decoration: underline; }
 
-    /* Patička */
+    /* --- PATIČKA --- */
     .footer {
-      margin-top: 50px;
+      margin-top: 40px;
       border-top: 1px solid #000;
       padding-top: 5px;
       font-size: 10px;
@@ -95,12 +107,12 @@
       justify-content: space-between;
     }
 
-    /* Tlačítko tisku - styl z auditu */
+    /* Tlačítko tisku - uprostřed */
     .btn-print { 
       display: block; 
       width: 100%; 
       max-width: 200px; 
-      margin: 0 auto 20px auto; /* Doprostřed */
+      margin: 0 auto 20px auto; 
       padding: 10px; 
       background: #333; 
       color: white; 
@@ -151,31 +163,37 @@
           <img src="https://www.streicher.cz/fileadmin/Vorlage/images/logo.png" alt="Logo STREICHER" class="logo-img">
           <div>
             <h1>${h.dodavatel}</h1>
-            <small style="font-size: 14px; color: #444;">Kvartální hodnocení kvality</small>
+            <small style="font-size: 12px; color: #444; text-transform:uppercase;">Kvartální hodnocení kvality</small>
           </div>
         </div>
-        <div class="meta-box">
-          Období: <strong>${h.obdobi}</strong><br>
-          Skóre: <span class="score-big">${h.skore_procenta} %</span>
+        <div class="meta-date">
+          Období: ${h.obdobi}
         </div>
       </div>
 
       <div class="dashboard-grid">
-        <div class="kpi-item">
-          <span class="kpi-val">${h.obrat}</span>
-          <span class="kpi-label">Obrat</span>
+        <div class="score-box">
+          <span class="val-score">${h.skore_procenta} %</span>
+          <span class="lbl">Výsledek</span>
         </div>
-        <div class="kpi-item">
-          <span class="kpi-val">${h.pocet_celkem}</span>
-          <span class="kpi-label">Objednávek</span>
+        
+        <div class="kpi-box">
+          <span class="val-big">${h.obrat}</span>
+          <span class="lbl">Obrat</span>
         </div>
-        <div class="kpi-item">
-          <span class="kpi-val">${h.pocet_zpozdenych}</span>
-          <span class="kpi-label">Problémových</span>
+
+        <div class="kpi-box">
+          <span class="val-big">${h.pocet_celkem}</span>
+          <span class="lbl">Objednávek</span>
+        </div>
+
+        <div class="kpi-box">
+          <span class="val-big">${h.pocet_zpozdenych}</span>
+          <span class="lbl">Problémových</span>
         </div>
       </div>
 
-      <h3 style="text-transform: uppercase; font-size: 16px; margin-bottom: 10px;">Přehled objednávek</h3>
+      <h3 style="text-transform: uppercase; font-size: 14px; margin-bottom: 5px; border-bottom: 1px solid #ccc; padding-bottom: 2px;">Detail objednávek</h3>
       <table>
         <thead>
           <tr>
