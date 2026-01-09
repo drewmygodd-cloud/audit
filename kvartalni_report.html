@@ -2,118 +2,91 @@
 <html lang="cs">
 <head>
   <meta charset="UTF-8">
-  <title>Kvartální Report</title>
+  <title>Kvartální Hodnocení</title>
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   <style>
-    /* RESET A ZÁKLAD */
-    * { box-sizing: border-box; }
-    
+    /* --- STYLY PŘEVZATÉ Z ROČNÍHO AUDITU --- */
     body { 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-      background-color: #f4f4f4; /* Šedé pozadí na obrazovce */
-      margin: 0;
-      padding: 20px;
-      color: #000;
+      background-color: #f0f0f0; 
+      margin: 0; 
+      padding: 20px; 
+      color: #000; 
     }
 
-    /* TLAČÍTKO PRO TISK (Na papíře zmizí) */
-    .print-btn-container {
-      text-align: right;
-      max-width: 210mm;
-      margin: 0 auto 10px auto;
+    /* Definice stránky - přesně podle auditu */
+    .page { 
+      background: white; 
+      width: 210mm; 
+      min-height: 297mm; 
+      margin: 0 auto 20px auto; 
+      padding: 20mm; 
+      box-shadow: 0 0 10px rgba(0,0,0,0.1); 
+      box-sizing: border-box; 
     }
     
-    button.print-btn {
-      background-color: #333;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      cursor: pointer;
-      font-weight: bold;
-      border-radius: 4px;
-      font-size: 14px;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    button.print-btn:hover { background-color: #000; }
-
-    /* KONTEJNER STRÁNKY (Vzhled A4 na obrazovce) */
-    .page {
-      background: white;
-      max-width: 210mm;
-      min-height: 297mm; /* Aby to vypadalo jako papír */
-      margin: 0 auto;
-      padding: 15mm;     /* Vnitřní okraje obsahu */
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    /* Tisková pravidla - to, co opraví okraje */
+    @media print {
+      body { background: none; padding: 0; }
+      .page { 
+        width: 100%; 
+        box-shadow: none; 
+        margin: 0; 
+        padding: 15mm; /* Bezpečný okraj pro tiskárnu */
+        height: auto; 
+      }
+      .no-print { display: none !important; }
+      /* Vynucení tisku pozadí (šedé řádky) */
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
 
-    /* HLAVIČKA */
-    header {
-      border-bottom: 2px solid #000;
-      padding-bottom: 15px;
-      margin-bottom: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
+    /* Hlavička s logem */
+    .header { 
+      border-bottom: 2px solid #000; 
+      padding-bottom: 15px; 
+      margin-bottom: 30px; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: flex-end; /* Zarovnání dolů */
     }
+    .header-left h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; color: #000; }
+    .logo-img { height: 60px; width: auto; max-width: 250px; object-fit: contain; margin-bottom: 10px; display: block; }
+    
+    .meta-box { text-align: right; font-size: 14px; }
+    .score-big { font-size: 28px; font-weight: bold; display: block; line-height: 1.2; }
 
-    h1 { margin: 0; font-size: 24px; text-transform: uppercase; color: #000; letter-spacing: 0.5px; }
-    .sub { font-size: 14px; color: #444; margin-top: 5px; }
-
-    .score-box { 
-      border: 2px solid #000; 
-      padding: 5px 15px; 
-      text-align: center; 
-      min-width: 90px;
+    /* KPI Boxy (zjednodušené pro kvartál) */
+    .dashboard-grid { 
+        display: flex; 
+        justify-content: space-between;
+        margin-bottom: 30px; 
+        border: 1px solid #000;
+        background: #fff;
     }
-    .score-val { font-size: 26px; font-weight: bold; display: block; line-height: 1.2; }
-    .score-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
-
-    /* KPI LIŠTA */
-    .kpi-bar {
-      display: flex;
-      border: 1px solid #999;
-      padding: 15px 0;
-      margin-bottom: 25px;
-      background-color: #fff;
-    }
+    
     .kpi-item {
       flex: 1;
       text-align: center;
-      border-right: 1px solid #ccc;
+      padding: 15px 5px;
+      border-right: 1px solid #000;
     }
     .kpi-item:last-child { border-right: none; }
-    .kpi-val { font-weight: bold; font-size: 16px; display: block; margin-bottom: 2px; }
-    .kpi-lbl { font-size: 10px; text-transform: uppercase; color: #555; }
-
-    /* TABULKA */
-    table { width: 100%; border-collapse: collapse; font-size: 11px; }
     
-    th { 
-      text-align: left; 
-      border-bottom: 2px solid #000; 
-      padding: 8px 6px; 
-      text-transform: uppercase;
-      font-weight: bold;
-    }
+    .kpi-val { font-size: 20px; font-weight: bold; color: #000; display: block; }
+    .kpi-label { font-size: 11px; text-transform: uppercase; color: #555; margin-top: 5px; display: block; letter-spacing: 1px; }
+
+    /* Tabulka */
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+    th { background-color: #f4f4f4; font-weight: bold; text-transform: uppercase; border: 1px solid #000; padding: 8px; text-align: left; }
+    td { border: 1px solid #000; padding: 8px; vertical-align: top; color: #000; }
     
-    td { 
-      border-bottom: 1px solid #ccc; 
-      padding: 6px; 
-      vertical-align: top;
-      color: #000;
-    }
-
-    /* Proužkování pro lepší čitelnost */
-    tr:nth-child(even) { background-color: #f2f2f2; }
-
-    /* Styl problémů - jen tučně a podtrženě */
+    /* Zvýraznění problémů */
     .problem-text { font-weight: bold; text-decoration: underline; }
 
-    /* PATIČKA */
+    /* Patička */
     .footer {
-      margin-top: 40px;
+      margin-top: 50px;
       border-top: 1px solid #000;
       padding-top: 5px;
       font-size: 10px;
@@ -122,47 +95,30 @@
       justify-content: space-between;
     }
 
-    /* --- NASTAVENÍ PRO TISK --- */
-    @media print {
-      /* Skryjeme tlačítko a okolí */
-      .print-btn-container, .print-btn { display: none !important; }
-      
-      body { 
-        background-color: white; 
-        padding: 0; 
-        margin: 0;
-        -webkit-print-color-adjust: exact; /* Vynutí tisk pozadí (šedé řádky) */
-        print-color-adjust: exact;
-      }
-
-      /* Stránka se roztáhne na celou tiskovou oblast */
-      .page {
-        width: 100%;
-        max-width: none;
-        margin: 0;
-        padding: 0; /* Necháme okraje na tiskárně nebo jen minimální */
-        box-shadow: none;
-        border: none;
-        min-height: auto;
-      }
-
-      /* Zajistíme, aby se tabulka nerozbila přes stránky ošklivě */
-      table { page-break-inside: auto; }
-      tr { page-break-inside: avoid; page-break-after: auto; }
+    /* Tlačítko tisku - styl z auditu */
+    .btn-print { 
+      display: block; 
+      width: 100%; 
+      max-width: 200px; 
+      margin: 0 auto 20px auto; /* Doprostřed */
+      padding: 10px; 
+      background: #333; 
+      color: white; 
+      text-align: center; 
+      cursor: pointer; 
+      border-radius: 5px; 
+      font-weight: bold;
     }
+    .btn-print:hover { background: #000; }
   </style>
 </head>
 <body>
 
-<div class="print-btn-container">
-  <button class="print-btn" onclick="window.print()">
-    🖨️ TISKNOUT WIDGET
-  </button>
-</div>
+  <div class="no-print btn-print" onclick="window.print()">🖨️ Vytisknout Report</div>
 
-<div class="page" id="report">
-  <div style="text-align: center; padding-top: 100px; color: #666;">Načítám data...</div>
-</div>
+  <div class="page" id="report">
+    <div style="text-align: center; padding-top: 100px; color: #666;">Načítám data...</div>
+  </div>
 
 <script>
   grist.ready({
@@ -183,47 +139,51 @@
     try {
       data = JSON.parse(rawData);
     } catch (e) {
-      container.innerHTML = '<div style="color:red; text-align:center;">Chyba dat JSON</div>';
+      container.innerHTML = '<div style="color:red; text-align:center; padding:20px;">Chyba dat JSON</div>';
       return;
     }
 
     const h = data.hlavicka;
 
     let html = `
-      <header>
-        <div>
-          <h1>${h.dodavatel}</h1>
-          <div class="sub">Kvartální hodnocení: <strong>${h.obdobi}</strong></div>
+      <div class="header">
+        <div class="header-left">
+          <img src="https://www.streicher.cz/fileadmin/Vorlage/images/logo.png" alt="Logo STREICHER" class="logo-img">
+          <div>
+            <h1>${h.dodavatel}</h1>
+            <small style="font-size: 14px; color: #444;">Kvartální hodnocení kvality</small>
+          </div>
         </div>
-        <div class="score-box">
-          <span class="score-val">${h.skore_procenta} %</span>
-          <span class="score-lbl">Výsledek</span>
-        </div>
-      </header>
-
-      <div class="kpi-bar">
-        <div class="kpi-item">
-          <span class="kpi-val">${h.obrat}</span>
-          <span class="kpi-lbl">Obrat</span>
-        </div>
-        <div class="kpi-item">
-          <span class="kpi-val">${h.pocet_celkem}</span>
-          <span class="kpi-lbl">Objednávek</span>
-        </div>
-        <div class="kpi-item">
-          <span class="kpi-val">${h.pocet_zpozdenych}</span>
-          <span class="kpi-lbl">Problémových</span>
+        <div class="meta-box">
+          Období: <strong>${h.obdobi}</strong><br>
+          Skóre: <span class="score-big">${h.skore_procenta} %</span>
         </div>
       </div>
 
+      <div class="dashboard-grid">
+        <div class="kpi-item">
+          <span class="kpi-val">${h.obrat}</span>
+          <span class="kpi-label">Obrat</span>
+        </div>
+        <div class="kpi-item">
+          <span class="kpi-val">${h.pocet_celkem}</span>
+          <span class="kpi-label">Objednávek</span>
+        </div>
+        <div class="kpi-item">
+          <span class="kpi-val">${h.pocet_zpozdenych}</span>
+          <span class="kpi-label">Problémových</span>
+        </div>
+      </div>
+
+      <h3 style="text-transform: uppercase; font-size: 16px; margin-bottom: 10px;">Přehled objednávek</h3>
       <table>
         <thead>
           <tr>
             <th style="width: 12%">Datum</th>
             <th style="width: 15%">Objednávka</th>
             <th style="width: 18%; text-align: right;">Cena</th>
-            <th style="width: 15%; padding-left: 15px;">Status</th>
-            <th style="width: 40%">Poznámka</th>
+            <th style="width: 15%; padding-left: 10px;">Status</th>
+            <th style="width: 40%">Poznámka / Problém</th>
           </tr>
         </thead>
         <tbody>
@@ -231,7 +191,6 @@
 
     if (data.radky && data.radky.length > 0) {
       data.radky.forEach(r => {
-        // Pokud je problém, použijeme span s třídou, jinak prázdno
         let probContent = r.je_problem ? `<span class="problem-text">${r.text_problemu}</span>` : '';
         
         html += `
@@ -239,7 +198,7 @@
             <td>${r.datum}</td>
             <td>${r.cislo}</td>
             <td style="text-align: right;">${r.cena}</td>
-            <td style="padding-left: 15px;">${r.status}</td>
+            <td style="padding-left: 10px;">${r.status}</td>
             <td>${probContent}</td>
           </tr>
         `;
@@ -253,8 +212,8 @@
       </table>
 
       <div class="footer">
-        <span>Interní report kvality</span>
-        <span>Vytištěno: ${new Date().toLocaleDateString('cs-CZ')}</span>
+        <span>Vygenerováno systémem hodnocení dodavatelů</span>
+        <span>Datum tisku: ${new Date().toLocaleDateString('cs-CZ')}</span>
       </div>
     `;
 
