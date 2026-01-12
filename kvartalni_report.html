@@ -98,8 +98,7 @@
         let sign = '';
         if (val > 0.1) { arrow = '↗'; cls = 't-up'; sign = '+'; }
         else if (val < -0.1) { arrow = '↘'; cls = 't-down'; sign = ''; }
-        
-        // Zde je trend bez závorek, jak jsi chtěl
+      
         trendHtml = `<div class="trend-box ${cls}">${arrow} ${sign}${val.toFixed(1)} % <span style="color:#000; font-weight:normal; margin-left:3px;">${h.trend_label}</span></div>`;
     }
 
@@ -142,7 +141,7 @@
       <table>
         <thead>
           <tr>
-            <th style="width: 12%">Datum</th>
+            <th style="width: 12%">Datum fakturace</th>
             <th style="width: 15%">Objednávka</th>
             <th style="width: 18%; text-align: right;">Cena</th>
             <th style="width: 15%; padding-left: 10px;">Status</th>
@@ -185,5 +184,6 @@
 
 </body>
 </html>
+
 
 
