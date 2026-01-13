@@ -5,7 +5,7 @@
   <title>Kvartální Hodnocení</title>
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   <style>
-    /* --- ZÁKLADNÍ STYLY (MONITOR) --- */
+    /* --- ZÁKLAD PRO MONITOR --- */
     body { 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
       background-color: #f0f0f0; 
@@ -13,43 +13,34 @@
       color: #000; 
     }
 
-    /* Vzhled "papíru" na obrazovce */
+    /* Vzhled papíru na monitoru (FIXNÍ ŠÍŘKA) */
     .page { 
       background: white; 
       width: 210mm; 
       min-height: 297mm; 
       margin: 0 auto 20px auto; 
-      padding: 20mm; 
+      padding: 20mm; /* Vnitřní okraj jen pro monitor */
       box-shadow: 0 0 10px rgba(0,0,0,0.1); 
       box-sizing: border-box; 
       position: relative; 
     }
     
-    /* --- TISK (ZDE JE TA ZMĚNA PRO OKRAJE) --- */
+    /* --- TISK (DYNAMICKÁ ŠÍŘKA) --- */
     @media print {
-      /* Tady nastavujeme fyzické okraje papíru.
-         margin-top: 25mm zajistí, že i druhá stránka začne níž.
-      */
+      /* 1. Tady říkáme tiskárně: "Udělej 2cm okraj na KAŽDÉ stránce fyzicky" */
       @page {
         size: A4 portrait;
-        margin-top: 25mm;    /* Větší mezera nahoře (pro každou stranu) */
-        margin-bottom: 15mm;
-        margin-left: 15mm;
-        margin-right: 15mm;
+        margin: 20mm; /* 2cm okraj nahoře, dole, vlevo, vpravo */
       }
 
-      body { 
-        background: none; 
-        padding: 0; 
-        margin: 0; 
-      }
+      body { background: none; padding: 0; margin: 0; }
       
+      /* 2. Tady říkáme obsahu: "Vyplň prostor mezi okraji, neměj fixní šířku" */
       .page { 
-        width: 100% !important; 
+        width: 100% !important; /* KLÍČOVÉ: Roztáhni se, nebuď nudle */
+        max-width: none !important;
         margin: 0 !important; 
-        /* Vypneme vnitřní padding, protože okraj už dělá @page nahoře. 
-           Kdybychom ho nechali, první stránka by měla mezeru 2x (25mm + 20mm) */
-        padding: 0 !important; 
+        padding: 0 !important; /* Vypneme HTML padding, okraje už dělá @page */
         box-shadow: none; 
         border: none;
         height: auto; 
@@ -59,13 +50,12 @@
       -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
 
-    /* --- HLAVIČKA --- */
+    /* --- ZBYTEK STYLŮ (beze změny) --- */
     .header { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-start; }
     .logo-img { height: 60px; width: auto; max-width: 200px; object-fit: contain; margin-bottom: 10px; display: block; }
     .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
     .meta-date { text-align: right; font-size: 14px; font-weight: bold; margin-top: 5px; }
 
-    /* --- DASHBOARD --- */
     .dashboard-container { display: flex; gap: 30px; margin-bottom: 35px; align-items: stretch; }
     
     .score-section { flex: 0 0 30%; background: #f4f4f4; border-left: 6px solid #000; padding: 15px; display: flex; flex-direction: column; justify-content: center; }
@@ -80,17 +70,14 @@
     .kpi-num { font-size: 20px; font-weight: bold; color: #000; }
     .kpi-lbl { font-size: 10px; text-transform: uppercase; color: #555; margin-top: 5px; }
 
-    /* --- TABULKA --- */
     table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 20px; }
     th { background-color: #eee; font-weight: bold; text-transform: uppercase; border: 1px solid #000; padding: 6px; text-align: left; }
     td { border: 1px solid #000; padding: 6px; vertical-align: top; color: #000; }
     .problem-text { font-weight: bold; text-decoration: underline; }
 
-    /* Opakování hlavičky na nové stránce */
     thead { display: table-header-group; }
     tr { page-break-inside: avoid; break-inside: avoid; }
 
-    /* --- PATIČKA --- */
     .footer { 
       margin-top: 50px; 
       padding-top: 20px;
