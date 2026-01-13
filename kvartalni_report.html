@@ -5,44 +5,44 @@
   <title>Kvartální Hodnocení</title>
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   <style>
-    /* --- ZÁKLAD (OBRAZOVKA) --- */
-    body { font-family: 'Segoe UI', sans-serif; background-color: #f0f0f0; margin: 0; padding: 20px; color: #000; }
-    
-    /* Vzhled papíru na monitoru */
+    /* --- ZÁKLADNÍ STYLY (Monitor) --- */
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      background-color: #f0f0f0; 
+      margin: 0; padding: 20px; 
+      color: #000; 
+    }
+
+    /* Stránka - A4 rozměr */
     .page { 
       background: white; 
       width: 210mm; 
-      min-height: 297mm; 
+      min-height: 297mm; /* Aby to vypadalo jako papír */
       margin: 0 auto 20px auto; 
-      padding: 20mm; /* Vnitřní okraj na monitoru */
+      padding: 20mm; 
       box-shadow: 0 0 10px rgba(0,0,0,0.1); 
       box-sizing: border-box; 
-      display: flex; 
-      flex-direction: column; 
+      position: relative; 
     }
     
-    /* --- TISK (ZDE JE ZMĚNA) --- */
+    /* --- TISK (OPRAVENO - Vráceno k funkční verzi) --- */
     @media print {
-      /* 1. Nastavíme fyzické okraje papíru - funguje na KAŽDÉ stránce */
-      @page {
-        margin: 15mm 20mm 15mm 20mm; /* Nahoře/Dole 15mm, Vlevo/Vpravo 20mm */
-        size: A4 portrait;
-      }
-
       body { background: none; padding: 0; margin: 0; }
       
       .page { 
         width: 100%; 
-        height: auto; 
         box-shadow: none; 
         margin: 0; 
-        /* 2. Zrušíme padding kontejneru, protože okraj už dělá @page výše */
-        padding: 0; 
-        display: block; 
+        padding: 15mm; /* Toto dělá ten bezpečný okraj uvnitř papíru */
+        min-height: auto; /* Při tisku nefixujeme výšku, ať se natáhne */
+        height: auto;
       }
       
       .no-print { display: none !important; }
       -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      
+      /* Zajistí, že patička nebude překrývat text, pokud je tabulka dlouhá */
+      .footer { position: static; margin-top: 30px; }
     }
 
     /* --- HLAVIČKA --- */
@@ -53,8 +53,9 @@
 
     /* --- DASHBOARD --- */
     .dashboard-container { display: flex; gap: 30px; margin-bottom: 35px; align-items: stretch; }
+    
     .score-section { flex: 0 0 30%; background: #f4f4f4; border-left: 6px solid #000; padding: 15px; display: flex; flex-direction: column; justify-content: center; }
-    .score-val { font-size: 36px; font-weight: bold; line-height: 1; }
+    .score-val { font-size: 36px; font-weight: bold; line-height: 1; color: #000; }
     .score-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #555; margin-top: 5px; }
     
     .trend-box { font-size: 13px; margin-top: 8px; font-weight: 500; }
@@ -62,7 +63,7 @@
 
     .kpi-section { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
     .kpi-box { border: 1px solid #000; background: #fff; padding: 10px; display: flex; flex-direction: column; justify-content: center; text-align: center; }
-    .kpi-num { font-size: 20px; font-weight: bold; }
+    .kpi-num { font-size: 20px; font-weight: bold; color: #000; }
     .kpi-lbl { font-size: 10px; text-transform: uppercase; color: #555; margin-top: 5px; }
 
     /* --- TABULKA --- */
@@ -71,23 +72,23 @@
     td { border: 1px solid #000; padding: 6px; vertical-align: top; color: #000; }
     .problem-text { font-weight: bold; text-decoration: underline; }
 
-    /* Opakování hlavičky na nové stránce */
+    /* --- INTELIGENTNÍ ZALOMENÍ TABULKY --- */
+    /* Toto zajistí, že se hlavička zopakuje na další stránce */
     thead { display: table-header-group; }
+    /* Toto zajistí, že se řádek nerozsekne v půlce textu */
     tr { page-break-inside: avoid; break-inside: avoid; }
 
     /* --- PATIČKA --- */
     .footer { 
-      margin-top: auto; 
-      padding-top: 20px; 
+      /* Na monitoru fixně dole, při tisku se chová jako blok pod textem (viz @media print) */
+      position: absolute; 
+      bottom: 15mm; left: 20mm; right: 20mm; 
       border-top: 1px solid #000; 
-      font-size: 10px; 
-      color: #333; 
-      display: flex; 
-      justify-content: space-between; 
-      /* Aby se patička netrhala od čáry */
-      page-break-inside: avoid;
+      padding-top: 5px; 
+      font-size: 10px; color: #333; 
+      display: flex; justify-content: space-between; 
     }
-    
+
     .btn-print { display: block; width: 200px; margin: 0 auto 20px auto; padding: 10px; background: #333; color: white; text-align: center; cursor: pointer; border-radius: 5px; font-weight: bold; }
     .btn-print:hover { background: #000; }
   </style>
@@ -111,14 +112,12 @@
     const rawData = record.Tiskova_Data;
 
     if (!rawData) {
-      container.innerHTML = '<div style="text-align:center; padding-top:50px;">Žádná data (prázdný vstup).</div>';
+      container.innerHTML = '<div style="text-align:center; padding-top:50px;">Žádná data.</div>';
       return;
     }
 
     let data;
-    try {
-      data = JSON.parse(rawData);
-    } catch (e) {
+    try { data = JSON.parse(rawData); } catch (e) {
       container.innerHTML = '<div style="color:red; text-align:center; padding:50px;">CHYBA DAT:<br>' + rawData + '</div>';
       return;
     }
