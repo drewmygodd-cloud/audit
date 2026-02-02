@@ -8,11 +8,10 @@
     /* --- ZÁKLAD --- */
     body { font-family: 'Segoe UI', sans-serif; background-color: #f0f0f0; margin: 0; padding: 20px; color: #000; }
     
-    /* ÚPRAVA 1: Flexbox pro správné roztažení obsahu */
     .page { 
       background: white; 
       width: 210mm; 
-      min-height: 297mm; /* Minimálně A4, ale může růst */
+      min-height: 297mm;
       margin: 0 auto 20px auto; 
       padding: 20mm; 
       box-shadow: 0 0 10px rgba(0,0,0,0.1); 
@@ -23,14 +22,13 @@
     
     @media print {
       body { background: none; padding: 0; }
-      /* ÚPRAVA 2: Reset výšky pro tiskárnu, aby mohla stránkovat */
       .page { 
         width: 100%; 
-        height: auto; /* Důležité: už ne fixní výška */
+        height: auto;
         box-shadow: none; 
         margin: 0; 
         padding: 15mm; 
-        display: block; /* Pro tisk je block bezpečnější než flex */
+        display: block;
       }
       .no-print { display: none !important; }
       -webkit-print-color-adjust: exact; print-color-adjust: exact;
@@ -62,15 +60,13 @@
     td { border: 1px solid #000; padding: 6px; vertical-align: top; color: #000; }
     .problem-text { font-weight: bold; text-decoration: none; }
 
-    /* ÚPRAVA 3: Pravidla pro zalomení stránky v tabulce */
-    thead { display: table-header-group; } /* Opakuje hlavičku na nové stránce */
-    tr { page-break-inside: avoid; break-inside: avoid; } /* Zabrání rozseknutí řádku napůl */
+    thead { display: table-header-group; }
+    tr { page-break-inside: avoid; break-inside: avoid; }
 
     /* --- PATIČKA --- */
-    /* ÚPRAVA 4: Patička už není absolutní, ale fluidní */
     .footer { 
-      margin-top: auto; /* Vytlačí patičku dolů, pokud je obsah krátký */
-      padding-top: 20px; /* Mezera od obsahu */
+      margin-top: auto;
+      padding-top: 20px;
       border-top: 1px solid #000; 
       font-size: 10px; 
       color: #333; 
@@ -81,7 +77,6 @@
     .btn-print { display: block; width: 200px; margin: 0 auto 20px auto; padding: 10px; background: #333; color: white; text-align: center; cursor: pointer; border-radius: 5px; font-weight: bold; }
     .btn-print:hover { background: #000; }
 
-    /* Language toggle bar (screen only) */
     .langbar {
       max-width: 210mm;
       margin: 0 auto 10px auto;
@@ -112,10 +107,12 @@
 
 <script>
   // ---------------------------
-  // I18N (CZ <-> EN) driven by widget option toggle (works in summary table)
+  // I18N (CZ <-> EN) driven by localStorage toggle (no server calls => no 425)
   // ---------------------------
   let UI_ENGLISH = false;
   let LAST_RECORD = null;
+
+  const LS_KEY = "kvartal_widget_lang_en";
 
   const I18N_UI_CZ = {
     printReport: "🖨️ Vytisknout Report",
@@ -167,13 +164,11 @@
     noChange: "no change"
   };
 
-  // Status translations (CZ -> EN)
   const STATUS_TRANSLATIONS = {
     "Opožděno": "Delayed",
     "Doručeno": "Delivered"
   };
 
-  // Problem-type translations (CZ -> EN, incl. uppercase variants)
   const PROBLEM_TRANSLATIONS = {
     "Reklamace": "Claim",
     "Kvalita": "Quality Issue",
@@ -228,20 +223,14 @@
     return s;
   }
 
-  // Translates:
-  // - "Zpoždění X dnů" -> "Delay X days"
-  // - known tokens like "REKLAMACE" -> "CLAIM"
-  // Leaves free text untouched.
   function trProblemText(text) {
     const s = String(text || "").trim();
     if (!s) return s;
     if (!UI_ENGLISH) return s;
 
-    // exact delay pattern
     const m = s.match(/^Zpoždění\s+(\d+)\s+dnů$/i);
     if (m) return `Delay ${m[1]} days`;
 
-    // comma-separated list
     if (s.includes(",")) {
       return s.split(",").map(part => {
         const p = part.trim();
@@ -251,17 +240,15 @@
       }).join(", ");
     }
 
-    // single token translation
     const token = trProblemToken(s);
     if (token !== s) return token;
 
     return s;
   }
 
-  async function loadLangOption() {
+  function loadLangFromLocalStorage() {
     try {
-      const opt = await grist.getOption("lang_en");
-      UI_ENGLISH = !!opt;
+      UI_ENGLISH = localStorage.getItem(LS_KEY) === "1";
     } catch (e) {
       UI_ENGLISH = false;
     }
@@ -269,13 +256,20 @@
     if (cb) cb.checked = UI_ENGLISH;
   }
 
+  function saveLangToLocalStorage() {
+    try {
+      localStorage.setItem(LS_KEY, UI_ENGLISH ? "1" : "0");
+    } catch (e) {}
+  }
+
   function bindLangToggle() {
     const cb = document.getElementById("langToggle");
     if (!cb) return;
-    cb.addEventListener("change", async () => {
+    cb.addEventListener("change", () => {
       UI_ENGLISH = cb.checked;
-      try { await grist.setOption("lang_en", UI_ENGLISH); } catch (e) {}
+      saveLangToLocalStorage();
       if (LAST_RECORD) renderRecord(LAST_RECORD);
+      applyI18N(document);
     });
   }
 
@@ -297,25 +291,23 @@
       container.innerHTML = `<div style="color:red; text-align:center; padding:50px;">${t("dataError","CHYBA DAT")}:<br>${rawData}</div>`;
       return;
     }
-    
+
     if (data.error) {
-       container.innerHTML = `<div style="color:red; text-align:center; padding:50px;">${t("pythonError","CHYBA PYTHONU")}:<br>${data.error}</div>`;
-       return;
+      container.innerHTML = `<div style="color:red; text-align:center; padding:50px;">${t("pythonError","CHYBA PYTHONU")}:<br>${data.error}</div>`;
+      return;
     }
 
     const h = data.hlavicka;
 
     let trendHtml = '';
     if (h.trend_label) {
-        let val = h.trend_val;
-        let arrow = '➡';
-        let cls = 't-neut';
-        let sign = '';
-        if (val > 0.1) { arrow = '↗'; cls = 't-up'; sign = '+'; }
-        else if (val < -0.1) { arrow = '↘'; cls = 't-down'; sign = ''; }
-        
-        // trend_label is free text => do not translate
-        trendHtml = `<div class="trend-box ${cls}">${arrow} ${sign}${val.toFixed(1)} % <span style="color:#000; font-weight:normal; margin-left:3px;">${h.trend_label}</span></div>`;
+      let val = h.trend_val;
+      let arrow = '➡';
+      let cls = 't-neut';
+      let sign = '';
+      if (val > 0.1) { arrow = '↗'; cls = 't-up'; sign = '+'; }
+      else if (val < -0.1) { arrow = '↘'; cls = 't-down'; sign = ''; }
+      trendHtml = `<div class="trend-box ${cls}">${arrow} ${sign}${val.toFixed(1)} % <span style="color:#000; font-weight:normal; margin-left:3px;">${h.trend_label}</span></div>`;
     }
 
     let html = `
@@ -369,7 +361,7 @@
 
     if (data.radky && data.radky.length > 0) {
       data.radky.forEach(r => {
-        let probContent = r.je_problem ? `<span class="problem-text">${trProblemText(r.text_problemu)}</span>` : '';
+        const probContent = r.je_problem ? `<span class="problem-text">${trProblemText(r.text_problemu)}</span>` : '';
         html += `
           <tr>
             <td>${r.datum}</td>
@@ -381,7 +373,7 @@
         `;
       });
     } else {
-        html += `<tr><td colspan="5" style="text-align:center; padding: 20px;">${t("noOrders","Žádné objednávky.")}</td></tr>`;
+      html += `<tr><td colspan="5" style="text-align:center; padding: 20px;">${t("noOrders","Žádné objednávky.")}</td></tr>`;
     }
 
     html += `
@@ -398,19 +390,18 @@
     applyI18N(container);
   }
 
+  // Grist wiring
   grist.ready({
     columns: ['Tiskova_Data'],
     requiredAccess: 'read table'
   });
 
-  // Init: load saved language option, bind toggle, then wait for records
-  loadLangOption().then(() => {
-    bindLangToggle();
-    applyI18N(document);
-  });
+  // Init UI language from localStorage, bind toggle
+  loadLangFromLocalStorage();
+  bindLangToggle();
+  applyI18N(document);
 
   grist.onRecord(function(record) {
-    // render using current UI_ENGLISH (from widget option)
     renderRecord(record);
   });
 </script>
