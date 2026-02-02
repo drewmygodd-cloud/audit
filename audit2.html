@@ -463,7 +463,7 @@
                       </tr>
                   `;
               } else {
-                  delays.slice(0, 5).forEach(d => {
+                  delays.slice(0, 10).forEach(d => {
                       tbody.innerHTML += `<tr><td>${d.datum}</td><td>${d.cislo}</td><td style="font-weight:bold;">${d.dny} ${t("days","dnů")}</td><td>${tr(d.duvod)}</td></tr>`;
                   });
               }
@@ -575,4 +575,5 @@
   </script>
 </body>
 </html>
+
 
