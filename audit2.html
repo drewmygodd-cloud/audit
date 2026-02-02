@@ -63,97 +63,227 @@
 </head>
 <body>
 
-  <div class="no-print btn-print" onclick="window.print()">🖨️ Vytisknout Audit</div>
+  <div class="no-print btn-print" onclick="window.print()" data-i18n="printAudit">🖨️ Print Audit</div>
 
   <div class="page">
     <div class="header">
       <div class="header-left">
         <img src="https://www.streicher.cz/fileadmin/Vorlage/images/logo.png" alt="Logo STREICHER" class="logo-img" id="companyLogo">
-        <div><h1>Audit Dodavatele</h1><small>Výroční vyhodnocení</small></div>
+        <div>
+          <h1 data-i18n="auditSupplierTitle">Supplier Audit</h1>
+          <small data-i18n="annualEvaluation">Annual evaluation</small>
+        </div>
       </div>
       <div style="text-align: right; margin-top: 10px;">
-        Období: <span id="auditYear" style="font-weight:bold;">---</span><br>
-        Datum: <span id="currentDate"></span>
+        <span data-i18n="periodLabel">Period</span>: <span id="auditYear" style="font-weight:bold;">---</span><br>
+        <span data-i18n="dateLabel">Date</span>: <span id="currentDate"></span>
       </div>
     </div>
     
     <div style="margin-bottom: 20px; font-size: 1.1em;">
-      <strong>Dodavatel:</strong> <span id="supName" style="font-size: 1.3em; margin-left: 10px;">---</span>
+      <strong data-i18n="supplierLabel">Supplier</strong>: <span id="supName" style="font-size: 1.3em; margin-left: 10px;">---</span>
     </div>
 
     <div class="dashboard-grid">
         <div class="score-box">
-            <span style="font-size: 12px; color: #000; text-transform: uppercase;">Hodnocení</span>
+            <span style="font-size: 12px; color: #000; text-transform: uppercase;" data-i18n="ratingLabel">Rating</span>
             <div class="value" id="totalScore">0 %</div>
             <div id="trendDisplay" style="font-size: 14px; margin-top: 5px;"></div>
         </div>
 
         <div class="alert-box">
             <div class="alert-num" id="turnoverVal">0 Kč</div>
-            <div class="alert-label">Roční obrat</div>
+            <div class="alert-label" data-i18n="annualTurnoverLabel">Annual turnover</div>
         </div>
 
         <div class="alert-box" id="boxClaims">
             <div class="alert-num" id="countClaims">0</div>
-            <div class="alert-label">Reklamace</div>
+            <div class="alert-label" data-i18n="claimsLabel">Claims</div>
         </div>
 
         <div class="alert-box" id="boxDelays">
             <div class="alert-num" id="countDelays">0 <span class="alert-sub">/ 0</span></div>
-            <div class="alert-label">Zpožděné / Celkem</div>
+            <div class="alert-label" data-i18n="delayedTotalLabel">Delayed / Total</div>
         </div>
     </div>
 
-    <h3>Výsledky</h3>
+    <h3 data-i18n="resultsHeading">Results</h3>
     <table>
-      <tr><td><strong>Zpoždění, stížnosti a reklamace</strong></td><td class="num" id="hardData">0 %</td></tr>
-      <tr><td><strong>Environment</strong></td><td class="num" id="softEnv">0 %</td></tr>
-      <tr><td><strong>Komunikace</strong></td><td class="num" id="softComm">0 %</td></tr>
-      <tr><td><strong>Servis</strong></td><td class="num" id="softServ">0 %</td></tr>
-      <tr><td><strong>Inovace</strong></td><td class="num" id="softInno">0 %</td></tr>
-      <tr><td><strong>Kvalifikace pracovníků</strong></td><td class="num" id="softQual">0 %</td></tr>
-      <tr><td><strong>Bonita</strong></td><td class="num" id="softBon">0 %</td></tr>
+      <tr><td><strong data-i18n="hardDataRow">Delays, complaints and claims</strong></td><td class="num" id="hardData">0 %</td></tr>
+      <tr><td><strong data-i18n="environmentRow">Environment</strong></td><td class="num" id="softEnv">0 %</td></tr>
+      <tr><td><strong data-i18n="communicationRow">Communication</strong></td><td class="num" id="softComm">0 %</td></tr>
+      <tr><td><strong data-i18n="serviceRow">Service</strong></td><td class="num" id="softServ">0 %</td></tr>
+      <tr><td><strong data-i18n="innovationRow">Innovation</strong></td><td class="num" id="softInno">0 %</td></tr>
+      <tr><td><strong data-i18n="qualificationRow">Employee qualifications</strong></td><td class="num" id="softQual">0 %</td></tr>
+      <tr><td><strong data-i18n="creditworthinessRow">Creditworthiness</strong></td><td class="num" id="softBon">0 %</td></tr>
     </table>
     
-    <h3>Poznámky</h3>
+    <h3 data-i18n="notesHeading">Notes</h3>
     <div id="managerNote" style="border: 1px solid #000; min-height: 100px; padding: 10px; font-style: italic; color: #000;"></div>
 
     <div style="margin-top: 100px; padding-top: 0; display: flex; justify-content: space-between;">
-        <div style="text-align:center; width:40%; border-top:1px solid #000; padding-top:5px;">Dodavatel</div>
-        <div style="text-align:center; width:40%; border-top:1px solid #000; padding-top:5px;">Auditor</div>
+        <div style="text-align:center; width:40%; border-top:1px solid #000; padding-top:5px;" data-i18n="supplierSign">Supplier</div>
+        <div style="text-align:center; width:40%; border-top:1px solid #000; padding-top:5px;" data-i18n="auditorSign">Auditor</div>
     </div>
   </div>
 
   <div class="page page-break">
-    <h3>Kvartální hodnocení</h3>
+    <h3 data-i18n="quarterlyRatingHeading">Quarterly rating</h3>
     <div class="chart-container"><canvas id="quarterChart"></canvas></div>
 
     <div id="sectionClaims" style="display:none; margin-top: 30px;">
-        <h3 style="padding-bottom:5px;">Reklamace a stížnosti</h3>
+        <h3 style="padding-bottom:5px;" data-i18n="claimsComplaintsHeading">Claims and complaints</h3>
         <table style="border: 1px solid #000">
-            <thead class="claim-header"><tr><th>Datum vystavení</th><th>Objednávka</th><th>Typ</th><th>Detail problému</th></tr></thead>
+            <thead class="claim-header">
+              <tr>
+                <th data-i18n="issuedDateCol">Issued date</th>
+                <th data-i18n="orderCol">Order</th>
+                <th data-i18n="typeCol">Type</th>
+                <th data-i18n="issueDetailCol">Issue detail</th>
+              </tr>
+            </thead>
             <tbody id="tableClaimsBody"></tbody>
         </table>
     </div>
 
-    <h3 style="margin-top: 30px;">Zpožděné objednávky</h3>
+    <h3 style="margin-top: 30px;" data-i18n="delayedOrdersHeading">Delayed orders</h3>
     <table id="delayTable">
-      <thead><tr><th>Termín dodání</th><th>Číslo</th><th>Zpoždění</th><th>Důvod</th></tr></thead>
+      <thead>
+        <tr>
+          <th data-i18n="deliveryDueCol">Delivery due</th>
+          <th data-i18n="numberCol">Number</th>
+          <th data-i18n="delayCol">Delay</th>
+          <th data-i18n="reasonCol">Reason</th>
+        </tr>
+      </thead>
       <tbody id="delayTableBody"></tbody>
     </table>
-    <div id="noDelaysMsg" style="display:none; padding:20px; text-align:center;">Žádné zpoždění v tomto období.</div>
+    <div id="noDelaysMsg" style="display:none; padding:20px; text-align:center;" data-i18n="noDelaysMsg">No delays in this period.</div>
   </div>
 
   <script>
+    // ---------------------------
+    // I18N "DICTIONARY" (CZ -> EN)
+    // ---------------------------
+
+    // Language toggle (from Grist column)
+    let UI_ENGLISH = false;
+
+    const I18N_UI_EN = {
+      printAudit: "🖨️ Print Audit",
+      auditSupplierTitle: "Supplier Audit",
+      annualEvaluation: "Annual evaluation",
+      periodLabel: "Period",
+      dateLabel: "Date",
+      supplierLabel: "Supplier",
+      ratingLabel: "Rating",
+      annualTurnoverLabel: "Annual turnover",
+      claimsLabel: "Claims",
+      delayedTotalLabel: "Delayed / Total",
+      resultsHeading: "Results",
+      hardDataRow: "Delays, complaints and claims",
+      environmentRow: "Environment",
+      communicationRow: "Communication",
+      serviceRow: "Service",
+      innovationRow: "Innovation",
+      qualificationRow: "Employee qualifications",
+      creditworthinessRow: "Creditworthiness",
+      notesHeading: "Notes",
+      supplierSign: "Supplier",
+      auditorSign: "Auditor",
+      quarterlyRatingHeading: "Quarterly rating",
+      claimsComplaintsHeading: "Claims and complaints",
+      issuedDateCol: "Issued date",
+      orderCol: "Order",
+      typeCol: "Type",
+      issueDetailCol: "Issue detail",
+      delayedOrdersHeading: "Delayed orders",
+      deliveryDueCol: "Delivery due",
+      numberCol: "Number",
+      delayCol: "Delay",
+      reasonCol: "Reason",
+      noDelaysMsg: "No delays in this period.",
+      placeholderNotes: "(Space for notes...)",
+      performanceLabel: "Performance",
+      vs: "vs",
+      noChange: "no change",
+      days: "days"
+    };
+
+    const I18N_DATA = {
+      // Delay reasons (CZ -> EN)
+      "Výroba": "Production",
+      "Doprava": "Transport",
+      "Materiál": "Material shortage",
+      "Kapacita": "Capacity issues",
+      "Jiné": "Other",
+      "Neznámý": "Unknown",
+      "Dodavatel": "Vendor fault",
+      "Čekání": "Waiting",
+
+      // Claim types (CZ -> EN)
+      "Reklamace": "Claim",
+      "Kvalita": "Quality Issue",
+      "Vada": "Defect",
+      "Stížnost": "Complaint",
+      "Stiznost": "Complaint",
+      "Komunikace": "Communication",
+      "Dodání": "Delivery Issue",
+      "Chování": "Behavior",
+      "Doklady": "Documents",
+
+      // Claim types as upper-case (because typ_out is .upper() in your JSON)
+      "REKLAMACE": "CLAIM",
+      "KVALITA": "QUALITY ISSUE",
+      "VADA": "DEFECT",
+      "STÍŽNOST": "COMPLAINT",
+      "STIZNOST": "COMPLAINT",
+      "KOMUNIKACE": "COMMUNICATION",
+      "DODÁNÍ": "DELIVERY ISSUE",
+      "CHOVÁNÍ": "BEHAVIOR",
+      "DOKLADY": "DOCUMENTS"
+    };
+
+    function t(key, fallback) {
+      if (!UI_ENGLISH) return (fallback ?? key);
+      return (key && Object.prototype.hasOwnProperty.call(I18N_UI_EN, key)) ? I18N_UI_EN[key] : (fallback ?? key);
+    }
+
+    function tr(text) {
+      if (text === null || text === undefined) return "";
+      const s = String(text).trim();
+      if (!s) return s;
+
+      if (!UI_ENGLISH) return s;
+
+      if (Object.prototype.hasOwnProperty.call(I18N_DATA, s)) return I18N_DATA[s];
+
+      // try basic normalization (remove diacritics)
+      const norm = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (Object.prototype.hasOwnProperty.call(I18N_DATA, norm)) return I18N_DATA[norm];
+
+      return s;
+    }
+
+    function applyI18N() {
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (!key) return;
+        el.innerText = t(key, el.innerText);
+      });
+    }
+
     function safeSet(id, val) { const el=document.getElementById(id); if(el) el.innerText=val; }
     function formatPercent(val) { if(typeof val==='number') return (val*100).toFixed(1)+" %"; return "---"; }
     function formatCurrency(val) {
         if(typeof val === 'number') {
-            return val.toLocaleString('cs-CZ', { style: 'currency', currency: 'CZK', maximumFractionDigits: 0 });
+            return val.toLocaleString(UI_ENGLISH ? 'en-US' : 'cs-CZ', { style: 'currency', currency: 'CZK', maximumFractionDigits: 0 });
         }
         return "---";
     }
 
+    // initial paint (CZ default)
+    applyI18N();
     document.getElementById('currentDate').innerText = new Date().toLocaleDateString('cs-CZ');
     let myChart = null;
 
@@ -174,7 +304,8 @@
         { name: "DelayData", title: "Zpoždění JSON", type: 'Text'},
         { name: "ClaimData", title: "Reklamace JSON", type: 'Text'},
         { name: "TrendCol", title: "Trend", type: 'Numeric'},
-        { name: "NoteCol", title: "Poznámka", type: 'Text'}
+        { name: "NoteCol", title: "Poznámka", type: 'Text'},
+        { name: "Tisk_Anglicky", title: "Tisk_Anglicky", type: 'Bool'}
       ],
       requiredAccess: 'read table'
     });
@@ -182,6 +313,13 @@
     grist.onRecord(function(record) {
       if (!record) return;
       const mapped = grist.mapColumnNames(record) || record;
+
+      // Language from Grist toggle
+      UI_ENGLISH = !!mapped.Tisk_Anglicky;
+
+      // re-apply UI labels + date locale
+      applyI18N();
+      document.getElementById('currentDate').innerText = new Date().toLocaleDateString(UI_ENGLISH ? 'en-US' : 'cs-CZ');
 
       safeSet('supName', mapped.NameCol);
       safeSet('auditYear', mapped.YearCol);
@@ -192,7 +330,7 @@
               noteEl.innerText = mapped.NoteCol;
               noteEl.style.fontStyle = "normal"; noteEl.style.color = "#000";
           } else {
-              noteEl.innerHTML = '<span class="only-screen" style="color:#aaa;">(Prostor pro poznámky...)</span>';
+              noteEl.innerHTML = '<span class="only-screen" style="color:#aaa;">' + t("placeholderNotes","(Prostor pro poznámky...)") + '</span>';
           }
       }
 
@@ -216,12 +354,12 @@
           
           if (mapped.TrendCol > 0.001) trendHtml = `<span class="trend-up">↗ +${diff}%</span>`;
           else if (mapped.TrendCol < -0.001) trendHtml = `<span class="trend-down">↘ ${diff}%</span>`;
-          else trendHtml = `<span class="trend-neutral">➡ beze změny</span>`;
+          else trendHtml = `<span class="trend-neutral">➡ ${t("noChange","beze změny")}</span>`;
           
           const curYear = mapped.YearCol || new Date().getFullYear();
           const prevYear = curYear - 1;
           
-          tEl.innerHTML = `${trendHtml} <span style="color:#555; margin-left:5px; font-size: 0.9em;">vs ${prevYear}</span>`;
+          tEl.innerHTML = `${trendHtml} <span style="color:#555; margin-left:5px; font-size: 0.9em;">${t("vs","vs")} ${prevYear}</span>`;
       }
 
       // --- ZPOŽDĚNÍ ---
@@ -248,15 +386,15 @@
                   tbody.innerHTML = `
                       <tr style="background-color: #f9f9f9; height: 50px;">
                           <td colspan="4" style="text-align: center; vertical-align: middle;">
-                              <strong>Celkem ${delayCount} zpožděných objednávek</strong><br>
-                              <span style="font-size: 0.9em; color: #555;">(Z celkového počtu ${totalOrders} objednávek)</span><br>
-                              <span style="font-size: 0.9em; color: #555;">Průměrné zpoždění: <strong>${avgDelay} dnů</strong></span>
+                              <strong>${UI_ENGLISH ? "Total" : "Celkem"} ${delayCount} ${UI_ENGLISH ? "delayed orders" : "zpožděných objednávek"}</strong><br>
+                              <span style="font-size: 0.9em; color: #555;">(${UI_ENGLISH ? "Out of" : "Z celkového počtu"} ${totalOrders} ${UI_ENGLISH ? "total orders" : "objednávek"})</span><br>
+                              <span style="font-size: 0.9em; color: #555;">${UI_ENGLISH ? "Average delay" : "Průměrné zpoždění"}: <strong>${avgDelay} ${t("days","dnů")}</strong></span>
                           </td>
                       </tr>
                   `;
               } else {
                   delays.slice(0, 5).forEach(d => {
-                      tbody.innerHTML += `<tr><td>${d.datum}</td><td>${d.cislo}</td><td style="font-weight:bold;">${d.dny} dnů</td><td>${d.duvod}</td></tr>`;
+                      tbody.innerHTML += `<tr><td>${tr(d.datum)}</td><td>${tr(d.cislo)}</td><td style="font-weight:bold;">${tr(d.dny)} ${t("days","dnů")}</td><td>${tr(d.duvod)}</td></tr>`;
                   });
               }
           }
@@ -271,22 +409,19 @@
           else boxDel.classList.add('status-warning');
       }
 
-      // --- REKLAMACE A STÍŽNOSTI (Hybridní logika) ---
-      let claimCountBox = 0; // Jen reklamace
-      let listClaims = [];   // Všechno
+      // --- REKLAMACE A STÍŽNOSTI ---
+      let claimCountBox = 0;
+      let listClaims = [];
       
       try {
           const cBody = document.getElementById('tableClaimsBody');
           cBody.innerHTML = "";
           let parsedData = mapped.ClaimData ? JSON.parse(mapped.ClaimData) : {};
           
-          // Podpora pro nové data (kde je oddělený počet a seznam)
           if (Array.isArray(parsedData)) {
-              // Starý formát (kdyby náhodou)
               listClaims = parsedData;
               claimCountBox = listClaims.length; 
           } else {
-              // Nový formát {pocet_reklamaci, seznam}
               listClaims = parsedData.seznam || [];
               claimCountBox = parsedData.pocet_reklamaci || 0;
           }
@@ -294,7 +429,7 @@
           if (listClaims.length > 0) {
               document.getElementById('sectionClaims').style.display = 'block';
               listClaims.forEach(c => {
-                  cBody.innerHTML += `<tr><td>${c.datum}</td><td><strong>${c.cislo}</strong></td><td><span class="claim-type">${c.typ}</span></td><td>${c.duvod}</td></tr>`;
+                  cBody.innerHTML += `<tr><td>${tr(c.datum)}</td><td><strong>${tr(c.cislo)}</strong></td><td><span class="claim-type">${tr(c.typ)}</span></td><td>${tr(c.duvod)}</td></tr>`;
               });
           } else {
               document.getElementById('sectionClaims').style.display = 'none';
@@ -319,7 +454,7 @@
                 type: 'bar',
                 data: {
                     labels: ['Q1', 'Q2', 'Q3', 'Q4'],
-                    datasets: [{ label: 'Výkon', data: [cData.Q1*100, cData.Q2*100, cData.Q3*100, cData.Q4*100], backgroundColor: '#3498db' }]
+                    datasets: [{ label: t("performanceLabel","Výkon"), data: [cData.Q1*100, cData.Q2*100, cData.Q3*100, cData.Q4*100], backgroundColor: '#3498db' }]
                 },
                 options: { 
                     plugins: { legend: { display: false } },
