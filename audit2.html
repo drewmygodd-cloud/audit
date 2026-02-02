@@ -9,13 +9,14 @@
     /* ZÁKLADNÍ STYLY - CLEAN MONOCHROME */
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f0f0; margin: 0; padding: 20px; color: #000; }
     .page { background: white; width: 210mm; min-height: 297mm; margin: 0 auto 20px auto; padding: 20mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); box-sizing: border-box; }
-    
+
     @media print {
       body { background: none; padding: 0; }
       .page { width: 100%; box-shadow: none; margin: 0; padding: 15mm; height: auto; }
       .no-print { display: none !important; }
       .only-screen { display: none !important; }
       .page-break { page-break-before: always; }
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
 
     /* Hlavička */
@@ -24,22 +25,22 @@
     .logo-img { height: 90px; width: auto; max-width: 300px; object-fit: contain; margin-bottom: 15px; display: block; }
 
     /* DASHBOARD GRID */
-    .dashboard-grid { 
-        display: grid; 
-        grid-template-columns: 1.8fr 1.5fr 0.8fr 1fr; 
-        gap: 15px; 
-        margin-bottom: 30px; 
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1.8fr 1.5fr 0.8fr 1fr;
+        gap: 15px;
+        margin-bottom: 30px;
     }
-    
+
     /* Boxy */
     .score-box { background: #f4f4f4; border-left: 5px solid #000; padding: 15px; display: flex; flex-direction: column; justify-content: center; }
     .value { font-size: 32px; font-weight: bold; color: #000; margin-top: 5px; }
-    
+
     .alert-box { background: #fff; border: 1px solid #000; padding: 10px; text-align: center; display: flex; flex-direction: column; justify-content: center; position: relative; }
     .alert-num { font-size: 24px; font-weight: bold; line-height: 1.1; color: #000; }
     .alert-sub { font-size: 14px; font-weight: normal; color: #555; }
     .alert-label { font-size: 11px; text-transform: uppercase; color: #000; margin-top: 5px; letter-spacing: 1px; }
-    
+
     /* Statusy (černobílé, jen pro logiku) */
     .status-ok, .status-warning, .status-danger { border-color: #000; background: #fff; color: #000; }
 
@@ -48,7 +49,7 @@
     th, td { border: 1px solid #000; padding: 8px; text-align: left; color: #000; }
     th { background-color: #f4f4f4; font-size: 12px; font-weight: bold; }
     td.num { text-align: right; font-weight: bold; }
-    
+
     .claim-header { background-color: #eee; color: #000; border-bottom: 2px solid #000; }
     .claim-type { font-weight: bold; color: #000; font-size: 11px; background: #fff; padding: 2px 5px; border: 1px solid #000; border-radius: 3px; }
 
@@ -59,9 +60,29 @@
 
     .chart-container { position: relative; height: 250px; width: 100%; margin-top: 20px; }
     .btn-print { display: block; width: 100%; max-width: 200px; margin: 0 auto 20px auto; padding: 10px; background: #333; color: white; text-align: center; cursor: pointer; border-radius: 5px; }
+
+    /* Language toggle bar (screen only) */
+    .langbar {
+      max-width: 210mm;
+      margin: 0 auto 10px auto;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      align-items: center;
+      font-weight: bold;
+    }
+    .langbar input { transform: translateY(1px); }
   </style>
 </head>
 <body>
+
+  <!-- Language toggle (works everywhere, no Grist columns needed) -->
+  <div class="no-print langbar">
+    <label style="display:flex; gap:8px; align-items:center;">
+      <input type="checkbox" id="langToggle">
+      English
+    </label>
+  </div>
 
   <div class="no-print btn-print" onclick="window.print()" data-i18n="printAudit">🖨️ Vytisknout Audit</div>
 
@@ -76,7 +97,7 @@
         <span data-i18n="dateLabel">Datum</span>: <span id="currentDate"></span>
       </div>
     </div>
-    
+
     <div style="margin-bottom: 20px; font-size: 1.1em;">
       <strong data-i18n="supplierLabel">Dodavatel</strong>: <span id="supName" style="font-size: 1.3em; margin-left: 10px;">---</span>
     </div>
@@ -114,7 +135,7 @@
       <tr><td><strong data-i18n="qualificationRow">Kvalifikace pracovníků</strong></td><td class="num" id="softQual">0 %</td></tr>
       <tr><td><strong data-i18n="creditworthinessRow">Bonita</strong></td><td class="num" id="softBon">0 %</td></tr>
     </table>
-    
+
     <h3 data-i18n="notesHeading">Poznámky</h3>
     <div id="managerNote" style="border: 1px solid #000; min-height: 100px; padding: 10px; font-style: italic; color: #000;"></div>
 
@@ -172,7 +193,7 @@
       return "---";
     }
 
-    // Toggle is applied inside onRecord, so locale is selected there too.
+    // currency stays CZK; only formatting changes with locale
     function formatCurrency(val) {
       if (typeof val === 'number') {
         return val.toLocaleString(UI_ENGLISH ? 'en-US' : 'cs-CZ', { style: 'currency', currency: 'CZK', maximumFractionDigits: 0 });
@@ -181,16 +202,11 @@
     }
 
     // ---------------------------
-    // I18N (CZ <-> EN) driven by Grist toggle
+    // I18N (CZ <-> EN) driven by localStorage (no Grist columns needed)
     // ---------------------------
     let UI_ENGLISH = false;
-
-    function toBool(v) {
-      if (v === true || v === 1) return true;
-      if (v === false || v === 0 || v == null) return false;
-      if (typeof v === "string") return v.toLowerCase() === "true";
-      return false;
-    }
+    let LAST_MAPPED = null;
+    const LS_KEY = "audit_widget_lang_en";
 
     const I18N_UI_CZ = {
       printAudit: "🖨️ Vytisknout Audit",
@@ -274,7 +290,6 @@
       days: "days"
     };
 
-    // JSON value translations (from your Python scripts)
     const I18N_DATA = {
       // Delay reasons (CZ -> EN)
       "Výroba": "Production",
@@ -297,7 +312,7 @@
       "Chování": "Behavior",
       "Doklady": "Documents",
 
-      // Uppercase variants (ClaimData.typ_out)
+      // Uppercase variants
       "REKLAMACE": "CLAIM",
       "KVALITA": "QUALITY ISSUE",
       "VADA": "DEFECT",
@@ -323,7 +338,6 @@
 
       if (Object.prototype.hasOwnProperty.call(I18N_DATA, s)) return I18N_DATA[s];
 
-      // try without diacritics (Stížnost -> Stiznost)
       const norm = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       if (Object.prototype.hasOwnProperty.call(I18N_DATA, norm)) return I18N_DATA[norm];
 
@@ -338,43 +352,44 @@
       });
     }
 
-    // Initial date (CZ default). Will be updated after first record.
+    function loadLangFromLocalStorage() {
+      try {
+        UI_ENGLISH = localStorage.getItem(LS_KEY) === "1";
+      } catch (e) {
+        UI_ENGLISH = false;
+      }
+      const cb = document.getElementById("langToggle");
+      if (cb) cb.checked = UI_ENGLISH;
+    }
+
+    function saveLangToLocalStorage() {
+      try { localStorage.setItem(LS_KEY, UI_ENGLISH ? "1" : "0"); } catch (e) {}
+    }
+
+    function bindLangToggle() {
+      const cb = document.getElementById("langToggle");
+      if (!cb) return;
+      cb.addEventListener("change", () => {
+        UI_ENGLISH = cb.checked;
+        saveLangToLocalStorage();
+        applyI18N();
+        document.getElementById('currentDate').innerText =
+          new Date().toLocaleDateString(UI_ENGLISH ? 'en-US' : 'cs-CZ');
+        if (LAST_MAPPED) renderMapped(LAST_MAPPED);
+      });
+    }
+
+    // Initial date (CZ default). Will be updated after first render.
     document.getElementById('currentDate').innerText = new Date().toLocaleDateString('cs-CZ');
     let myChart = null;
 
-    grist.ready({
-      columns: [
-        { name: "NameCol", title: "Dodavatel", type: 'Text'},
-        { name: "YearCol", title: "Rok", type: 'Int'},
-        { name: "TotalCol", title: "Celkové Skóre", type: 'Numeric'},
-        { name: "HardCol", title: "Hard Data", type: 'Numeric'},
-        { name: "EnvCol", title: "Environment", type: 'Numeric'},
-        { name: "CommCol", title: "Komunikace", type: 'Numeric'},
-        { name: "ServCol", title: "Servis", type: 'Numeric'},
-        { name: "InnoCol", title: "Inovace", type: 'Numeric'},
-        { name: "QualCol", title: "Kvalifikace", type: 'Numeric'},
-        { name: "BonCol", title: "Bonita", type: 'Numeric'},
-        { name: "TurnoverCol", title: "Obrat", type: 'Numeric'},
-        { name: "ChartData", title: "Graf JSON", type: 'Text'},
-        { name: "DelayData", title: "Zpoždění JSON", type: 'Text'},
-        { name: "ClaimData", title: "Reklamace JSON", type: 'Text'},
-        { name: "TrendCol", title: "Trend", type: 'Numeric'},
-        { name: "NoteCol", title: "Poznámka", type: 'Text'},
-        { name: "Tisk_Anglicky", title: "Tisk_Anglicky", type: 'Bool'}
-      ],
-      requiredAccess: 'read table'
-    });
+    function renderMapped(mapped) {
+      LAST_MAPPED = mapped;
 
-    grist.onRecord(function(record) {
-      if (!record) return;
-      const mapped = grist.mapColumnNames(record) || record;
-
-      // Language from Grist toggle
-      UI_ENGLISH = toBool(mapped.Tisk_Anglicky);
-
-      // Apply UI labels and locale-sensitive date
+      // UI labels & locale date
       applyI18N();
-      document.getElementById('currentDate').innerText = new Date().toLocaleDateString(UI_ENGLISH ? 'en-US' : 'cs-CZ');
+      document.getElementById('currentDate').innerText =
+        new Date().toLocaleDateString(UI_ENGLISH ? 'en-US' : 'cs-CZ');
 
       safeSet('supName', mapped.NameCol);
       safeSet('auditYear', mapped.YearCol);
@@ -449,7 +464,7 @@
                   `;
               } else {
                   delays.slice(0, 5).forEach(d => {
-                      tbody.innerHTML += `<tr><td>${tr(d.datum)}</td><td>${tr(d.cislo)}</td><td style="font-weight:bold;">${tr(d.dny)} ${t("days","dnů")}</td><td>${tr(d.duvod)}</td></tr>`;
+                      tbody.innerHTML += `<tr><td>${d.datum}</td><td>${d.cislo}</td><td style="font-weight:bold;">${d.dny} ${t("days","dnů")}</td><td>${tr(d.duvod)}</td></tr>`;
                   });
               }
           }
@@ -484,7 +499,7 @@
           if (listClaims.length > 0) {
               document.getElementById('sectionClaims').style.display = 'block';
               listClaims.forEach(c => {
-                  cBody.innerHTML += `<tr><td>${tr(c.datum)}</td><td><strong>${tr(c.cislo)}</strong></td><td><span class="claim-type">${tr(c.typ)}</span></td><td>${tr(c.duvod)}</td></tr>`;
+                  cBody.innerHTML += `<tr><td>${c.datum}</td><td><strong>${c.cislo}</strong></td><td><span class="claim-type">${tr(c.typ)}</span></td><td>${c.duvod}</td></tr>`;
               });
           } else {
               document.getElementById('sectionClaims').style.display = 'none';
@@ -511,16 +526,51 @@
                     labels: ['Q1', 'Q2', 'Q3', 'Q4'],
                     datasets: [{ label: t("performanceLabel","Výkon"), data: [cData.Q1*100, cData.Q2*100, cData.Q3*100, cData.Q4*100], backgroundColor: '#3498db' }]
                 },
-                options: { 
+                options: {
                     plugins: { legend: { display: false } },
-                    scales: { 
-                        y: { beginAtZero: true, max: 100, ticks: { callback: function(value) { return value + " %" } } } 
-                    }, 
-                    maintainAspectRatio: false 
+                    scales: {
+                        y: { beginAtZero: true, max: 100, ticks: { callback: function(value) { return value + " %" } } }
+                    },
+                    maintainAspectRatio: false
                 }
             });
         }
       } catch(e) {}
+    }
+
+    // Init language toggle + UI labels
+    loadLangFromLocalStorage();
+    bindLangToggle();
+    applyI18N();
+    document.getElementById('currentDate').innerText =
+      new Date().toLocaleDateString(UI_ENGLISH ? 'en-US' : 'cs-CZ');
+
+    grist.ready({
+      columns: [
+        { name: "NameCol", title: "Dodavatel", type: 'Text'},
+        { name: "YearCol", title: "Rok", type: 'Int'},
+        { name: "TotalCol", title: "Celkové Skóre", type: 'Numeric'},
+        { name: "HardCol", title: "Hard Data", type: 'Numeric'},
+        { name: "EnvCol", title: "Environment", type: 'Numeric'},
+        { name: "CommCol", title: "Komunikace", type: 'Numeric'},
+        { name: "ServCol", title: "Servis", type: 'Numeric'},
+        { name: "InnoCol", title: "Inovace", type: 'Numeric'},
+        { name: "QualCol", title: "Kvalifikace", type: 'Numeric'},
+        { name: "BonCol", title: "Bonita", type: 'Numeric'},
+        { name: "TurnoverCol", title: "Obrat", type: 'Numeric'},
+        { name: "ChartData", title: "Graf JSON", type: 'Text'},
+        { name: "DelayData", title: "Zpoždění JSON", type: 'Text'},
+        { name: "ClaimData", title: "Reklamace JSON", type: 'Text'},
+        { name: "TrendCol", title: "Trend", type: 'Numeric'},
+        { name: "NoteCol", title: "Poznámka", type: 'Text'}
+      ],
+      requiredAccess: 'read table'
+    });
+
+    grist.onRecord(function(record) {
+      if (!record) return;
+      const mapped = grist.mapColumnNames(record) || record;
+      renderMapped(mapped);
     });
   </script>
 </body>
