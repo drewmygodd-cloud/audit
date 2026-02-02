@@ -6,24 +6,24 @@
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* --- STYLY (Design pro obrazovku i tisk) --- */
+    /* --- PŮVODNÍ STYLY (CLEAN MONOCHROME) --- */
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f0f0; margin: 0; padding: 20px; color: #000; }
     .page { background: white; width: 210mm; min-height: 297mm; margin: 0 auto 20px auto; padding: 20mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); box-sizing: border-box; }
     
     @media print {
       body { background: none; padding: 0; }
-      .page { width: 100%; box-shadow: none; margin: 0; padding: 15mm; height: auto; min-height: 0; }
+      .page { width: 100%; box-shadow: none; margin: 0; padding: 15mm; height: auto; }
       .no-print { display: none !important; }
+      .only-screen { display: none !important; }
       .page-break { page-break-before: always; }
-      canvas { max-height: 100%; }
     }
 
     /* Hlavička */
     .header { border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
     .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px; color: #000; }
-    .logo-img { height: 80px; width: auto; max-width: 250px; object-fit: contain; margin-bottom: 10px; display: block; }
+    .logo-img { height: 90px; width: auto; max-width: 300px; object-fit: contain; margin-bottom: 15px; display: block; }
 
-    /* Dashboard Grid */
+    /* DASHBOARD GRID */
     .dashboard-grid { 
         display: grid; 
         grid-template-columns: 1.8fr 1.5fr 0.8fr 1fr; 
@@ -40,37 +40,35 @@
     .alert-sub { font-size: 14px; font-weight: normal; color: #555; }
     .alert-label { font-size: 11px; text-transform: uppercase; color: #000; margin-top: 5px; letter-spacing: 1px; }
     
-    /* Status barvy */
-    .status-warning { background-color: #fff3cd; border-color: #ffc107; } 
-    .status-danger { background-color: #f8d7da; border-color: #dc3545; }
-    .status-ok { background-color: #fff; border-color: #000; }
+    /* Statusy (černobílé, jen pro logiku) */
+    .status-ok, .status-warning, .status-danger { border-color: #000; background: #fff; color: #000; }
 
     /* Tabulky */
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-    th, td { border: 1px solid #000; padding: 6px 8px; text-align: left; color: #000; }
-    th { background-color: #eee; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+    th, td { border: 1px solid #000; padding: 8px; text-align: left; color: #000; }
+    th { background-color: #f4f4f4; font-size: 12px; font-weight: bold; }
     td.num { text-align: right; font-weight: bold; }
     
-    .claim-type { font-weight: bold; font-size: 10px; padding: 2px 4px; border: 1px solid #000; border-radius: 3px; display:inline-block; }
+    .claim-header { background-color: #eee; color: #000; border-bottom: 2px solid #000; }
+    .claim-type { font-weight: bold; color: #000; font-size: 11px; background: #fff; padding: 2px 5px; border: 1px solid #000; border-radius: 3px; }
 
-    /* Trend */
-    .trend-up { color: #27ae60; font-weight: bold; }
-    .trend-down { color: #c0392b; font-weight: bold; }
+    /* Trend (Barevný - toto jsi tam měl, nechávám) */
+    .trend-up { color: #27ae60; }
+    .trend-down { color: #c0392b; }
     .trend-neutral { color: #7f8c8d; }
 
-    .chart-container { position: relative; height: 220px; width: 100%; margin-top: 20px; }
-    .btn-print { display: block; width: 100%; max-width: 200px; margin: 0 auto 20px auto; padding: 12px; background: #2c3e50; color: white; text-align: center; cursor: pointer; border-radius: 4px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; transition: background 0.3s; }
-    .btn-print:hover { background: #1a252f; }
+    .chart-container { position: relative; height: 250px; width: 100%; margin-top: 20px; }
+    .btn-print { display: block; width: 100%; max-width: 200px; margin: 0 auto 20px auto; padding: 10px; background: #333; color: white; text-align: center; cursor: pointer; border-radius: 5px; }
   </style>
 </head>
 <body>
 
-  <div class="no-print btn-print" onclick="window.print()" id="btnPrint">🖨️ Vytisknout / Print</div>
+  <div class="no-print btn-print" onclick="window.print()" id="btnPrint">🖨️ Vytisknout Audit</div>
 
   <div class="page">
     <div class="header">
       <div class="header-left">
-        <img src="https://www.streicher.cz/fileadmin/Vorlage/images/logo.png" alt="Logo" class="logo-img">
+        <img src="https://www.streicher.cz/fileadmin/Vorlage/images/logo.png" alt="Logo STREICHER" class="logo-img" id="companyLogo">
         <div>
             <h1 id="lblTitle">Audit Dodavatele</h1>
             <small id="lblSubtitle">Výroční vyhodnocení</small>
@@ -123,7 +121,7 @@
     <h3 id="lblNotes">Poznámky</h3>
     <div id="managerNote" style="border: 1px solid #000; min-height: 100px; padding: 10px; font-style: italic; color: #000;"></div>
 
-    <div style="margin-top: 80px; padding-top: 0; display: flex; justify-content: space-between;">
+    <div style="margin-top: 100px; padding-top: 0; display: flex; justify-content: space-between;">
         <div style="text-align:center; width:40%; border-top:1px solid #000; padding-top:5px;" id="sigVendor">Dodavatel</div>
         <div style="text-align:center; width:40%; border-top:1px solid #000; padding-top:5px;" id="sigAuditor">Auditor</div>
     </div>
@@ -136,9 +134,9 @@
     <div id="sectionClaims" style="display:none; margin-top: 30px;">
         <h3 id="lblClaimDetail" style="padding-bottom:5px;">Reklamace a stížnosti</h3>
         <table style="border: 1px solid #000">
-            <thead>
+            <thead class="claim-header">
                 <tr>
-                    <th id="thDate1">Datum</th>
+                    <th id="thDate1">Datum vystavení</th>
                     <th id="thOrder1">Objednávka</th>
                     <th id="thType">Typ</th>
                     <th id="thDetail">Detail problému</th>
@@ -160,11 +158,11 @@
       </thead>
       <tbody id="delayTableBody"></tbody>
     </table>
-    <div id="noDelaysMsg" style="display:none; padding:20px; text-align:center; color:#555;"></div>
+    <div id="noDelaysMsg" style="display:none; padding:20px; text-align:center;">Žádné zpoždění v tomto období.</div>
   </div>
 
   <script>
-    // --- 1. SLOVNÍK PŘEKLADŮ ---
+    // 1. PŘEKLADOVÝ SLOVNÍK
     const LABELS = {
         cz: {
             title: "Audit Dodavatele", subtitle: "Výroční vyhodnocení", period: "Období", date: "Datum", vendor: "Dodavatel",
@@ -172,14 +170,15 @@
             results: "Výsledky", notes: "Poznámky",
             rowHard: "Zpoždění, stížnosti a reklamace", rowEnv: "Environment", rowComm: "Komunikace",
             rowServ: "Servis", rowInno: "Inovace", rowQual: "Kvalifikace pracovníků", rowBon: "Bonita",
-            sigVendor: "Dodavatel (Podpis)", sigAuditor: "Auditor (Podpis)",
+            sigVendor: "Dodavatel", sigAuditor: "Auditor",
             quarterly: "Kvartální hodnocení", chartLabel: "Výkon",
             claimDetail: "Reklamace a stížnosti",
-            thDate: "Datum", thOrder: "Objednávka", thType: "Typ", thDetail: "Detail problému",
+            thDate1: "Datum vystavení", thOrder: "Objednávka", thType: "Typ", thDetail: "Detail problému",
             delayDetail: "Zpožděné objednávky",
-            thTerm: "Termín dodání", thDelay: "Zpoždění", thReason: "Důvod",
+            thDate2: "Termín dodání", thDelay: "Zpoždění", thReason: "Důvod",
             msgNoDelay: "Žádné zpoždění v tomto období.",
-            msgTotalDelay: "Celkem zpožděných", msgOf: "Z celkového počtu", msgAvg: "Průměrné zpoždění"
+            msgTotalDelay: "Celkem zpožděných", msgOf: "Z celkového počtu", msgAvg: "Průměrné zpoždění",
+            btnPrint: "🖨️ Vytisknout Audit"
         },
         en: {
             title: "Supplier Audit", subtitle: "Annual Evaluation", period: "Period", date: "Date", vendor: "Vendor",
@@ -187,23 +186,22 @@
             results: "Results", notes: "Notes",
             rowHard: "Delays, Complaints & Claims", rowEnv: "Environment", rowComm: "Communication",
             rowServ: "Service", rowInno: "Innovation", rowQual: "Staff Qualification", rowBon: "Creditworthiness",
-            sigVendor: "Vendor (Signature)", sigAuditor: "Auditor (Signature)",
+            sigVendor: "Vendor", sigAuditor: "Auditor",
             quarterly: "Quarterly Evaluation", chartLabel: "Performance",
             claimDetail: "Claims & Complaints",
-            thDate: "Date", thOrder: "Order No.", thType: "Type", thDetail: "Issue Detail",
+            thDate1: "Date", thOrder: "Order No.", thType: "Type", thDetail: "Issue Detail",
             delayDetail: "Delayed Orders",
-            thTerm: "Delivery Date", thDelay: "Delay", thReason: "Reason",
+            thDate2: "Delivery Date", thDelay: "Delay", thReason: "Reason",
             msgNoDelay: "No delayed orders in this period.",
-            msgTotalDelay: "Total delayed orders", msgOf: "Out of total", msgAvg: "Average delay"
+            msgTotalDelay: "Total delayed orders", msgOf: "Out of total", msgAvg: "Average delay",
+            btnPrint: "🖨️ Print Audit"
         }
     };
 
-    // Pomocné funkce
     function safeSet(id, val) { const el=document.getElementById(id); if(el) el.innerText=val; }
     function formatPercent(val) { if(typeof val==='number') return (val*100).toFixed(1)+" %"; return "---"; }
-    function formatCurrency(val, isEn) {
+    function formatCurrency(val) {
         if(typeof val === 'number') {
-            // Pokud je EN, můžeme změnit formát, ale necháme zatím CZK formát pro přehlednost
             return val.toLocaleString('cs-CZ', { style: 'currency', currency: 'CZK', maximumFractionDigits: 0 });
         }
         return "---";
@@ -212,7 +210,6 @@
     document.getElementById('currentDate').innerText = new Date().toLocaleDateString('cs-CZ');
     let myChart = null;
 
-    // --- GRIST KONFIGURACE ---
     grist.ready({
       columns: [
         { name: "NameCol", title: "Dodavatel", type: 'Text'},
@@ -239,20 +236,18 @@
       if (!record) return;
       const mapped = grist.mapColumnNames(record) || record;
 
-      // 1. ZJIŠTĚNÍ JAZYKA (Z JSONu zpoždění nebo reklamací)
+      // 1. ZJIŠTĚNÍ JAZYKA
       let isEn = false;
       try {
-         // Zkusíme najít flag 'is_english' v datech zpoždění
          if(mapped.DelayData) {
              const temp = JSON.parse(mapped.DelayData);
              if(temp.is_english) isEn = true;
          }
       } catch(e) {}
 
-      // Vybereme správný slovník
+      // 2. APLIKACE PŘEKLADŮ (Nastavení textů podle jazyka)
       const L = isEn ? LABELS.en : LABELS.cz;
 
-      // 2. APLIKACE PŘEKLADŮ NA HTML
       safeSet('lblTitle', L.title);
       safeSet('lblSubtitle', L.subtitle);
       safeSet('lblPeriod', L.period);
@@ -276,22 +271,24 @@
       safeSet('lblNotes', L.notes);
       safeSet('sigVendor', L.sigVendor);
       safeSet('sigAuditor', L.sigAuditor);
+      safeSet('btnPrint', L.btnPrint);
 
       safeSet('lblQuarterly', L.quarterly);
       safeSet('lblClaimDetail', L.claimDetail);
-      safeSet('thDate1', L.thDate);
+      // Překlad hlaviček tabulky 1
+      safeSet('thDate1', L.thDate1);
       safeSet('thOrder1', L.thOrder);
       safeSet('thType', L.thType);
       safeSet('thDetail', L.thDetail);
 
       safeSet('lblDelayDetail', L.delayDetail);
-      safeSet('thDate2', L.thTerm);
+      // Překlad hlaviček tabulky 2
+      safeSet('thDate2', L.thDate2);
       safeSet('thOrder2', L.thOrder);
       safeSet('thDelay', L.thDelay);
       safeSet('thReason', L.thReason);
       
       safeSet('noDelaysMsg', L.msgNoDelay);
-
 
       // 3. VYPISOVÁNÍ DAT
       safeSet('supName', mapped.NameCol);
@@ -301,15 +298,16 @@
       if (noteEl) {
           if (mapped.NoteCol && mapped.NoteCol.trim()) {
               noteEl.innerText = mapped.NoteCol;
+              noteEl.style.fontStyle = "normal"; noteEl.style.color = "#000";
           } else {
-              noteEl.innerText = ""; // Prázdné pole pro ruční psaní
+              noteEl.innerHTML = '<span class="only-screen" style="color:#aaa;">(---)</span>';
           }
       }
 
       const scoreEl = document.getElementById('totalScore');
       if (scoreEl) scoreEl.innerText = formatPercent(mapped.TotalCol);
 
-      safeSet('turnoverVal', formatCurrency(mapped.TurnoverCol, isEn));
+      safeSet('turnoverVal', formatCurrency(mapped.TurnoverCol));
 
       safeSet('hardData', formatPercent(mapped.HardCol));
       safeSet('softEnv', formatPercent(mapped.EnvCol));
@@ -319,21 +317,21 @@
       safeSet('softQual', formatPercent(mapped.QualCol));
       safeSet('softBon', formatPercent(mapped.BonCol));
 
-      // Trend
       const tEl = document.getElementById('trendDisplay');
       if (tEl && typeof mapped.TrendCol === 'number') {
           const diff = (mapped.TrendCol*100).toFixed(1);
           let trendHtml = "";
+          
           if (mapped.TrendCol > 0.001) trendHtml = `<span class="trend-up">↗ +${diff}%</span>`;
           else if (mapped.TrendCol < -0.001) trendHtml = `<span class="trend-down">↘ ${diff}%</span>`;
-          else trendHtml = `<span class="trend-neutral">➡ 0%</span>`;
+          else trendHtml = `<span class="trend-neutral">➡ beze změny</span>`;
           
           const prevYear = (mapped.YearCol || new Date().getFullYear()) - 1;
-          const vsText = isEn ? "vs" : "oproti";
+          const vsText = isEn ? "vs" : "vs";
           tEl.innerHTML = `${trendHtml} <span style="color:#555; margin-left:5px; font-size: 0.9em;">(${vsText} ${prevYear})</span>`;
       }
 
-      // --- ZPOŽDĚNÍ TABULKA ---
+      // --- ZPOŽDĚNÍ ---
       let delayCount = 0;
       let totalOrders = 0;
       try {
@@ -353,19 +351,18 @@
               document.getElementById('delayTable').style.display = 'table';
               document.getElementById('noDelaysMsg').style.display = 'none';
               
-              if (delayCount > 10) {
-                  // Pokud je jich moc, vypíšeme souhrn
+              if (delayCount > 5) {
                   tbody.innerHTML = `
                       <tr style="background-color: #f9f9f9; height: 50px;">
                           <td colspan="4" style="text-align: center; vertical-align: middle;">
-                              <strong>${L.msgTotalDelay}: ${delayCount}</strong><br>
+                              <strong>${L.msgTotalDelay} ${delayCount}</strong><br>
                               <span style="font-size: 0.9em; color: #555;">(${L.msgOf} ${totalOrders})</span><br>
                               <span style="font-size: 0.9em; color: #555;">${L.msgAvg}: <strong>${avgDelay}</strong></span>
                           </td>
                       </tr>
                   `;
               } else {
-                  delays.forEach(d => {
+                  delays.slice(0, 5).forEach(d => {
                       tbody.innerHTML += `<tr><td>${d.datum}</td><td>${d.cislo}</td><td style="font-weight:bold;">${d.dny}</td><td>${d.duvod}</td></tr>`;
                   });
               }
@@ -374,8 +371,6 @@
 
       const countEl = document.getElementById('countDelays');
       if (countEl) countEl.innerHTML = `${delayCount} <span class="alert-sub">/ ${totalOrders}</span>`;
-      
-      // Barva boxu zpoždění
       const boxDel = document.getElementById('boxDelays');
       if (boxDel) {
           boxDel.className = 'alert-box';
@@ -383,7 +378,7 @@
           else boxDel.classList.add('status-warning');
       }
 
-      // --- REKLAMACE TABULKA ---
+      // --- REKLAMACE ---
       let claimCountBox = 0;
       let listClaims = [];
       try {
@@ -412,7 +407,7 @@
           else boxClm.classList.add('status-ok');
       }
 
-      // --- GRAF ---
+      // GRAF
       try {
         let cData = mapped.ChartData ? JSON.parse(mapped.ChartData) : {Q1:0,Q2:0,Q3:0,Q4:0};
         const ctx = document.getElementById('quarterChart');
@@ -422,11 +417,7 @@
                 type: 'bar',
                 data: {
                     labels: ['Q1', 'Q2', 'Q3', 'Q4'],
-                    datasets: [{ 
-                        label: L.chartLabel, // PŘEKLAD LEGENDY
-                        data: [cData.Q1*100, cData.Q2*100, cData.Q3*100, cData.Q4*100], 
-                        backgroundColor: '#2c3e50' // Tmavá profi barva
-                    }]
+                    datasets: [{ label: L.chartLabel, data: [cData.Q1*100, cData.Q2*100, cData.Q3*100, cData.Q4*100], backgroundColor: '#3498db' }]
                 },
                 options: { 
                     plugins: { legend: { display: false } },
