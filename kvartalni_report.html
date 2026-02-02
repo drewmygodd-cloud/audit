@@ -34,6 +34,7 @@
       margin-bottom:30px;
       display:flex;
       justify-content:space-between;
+      align-items:flex-start;
     }
 
     .logo-img {
@@ -41,14 +42,17 @@
       max-width:300px;
       object-fit:contain;
       margin-bottom:10px;
+      display:block;
     }
 
-    h1 { margin:0; font-size:24px; text-transform:uppercase; }
+    h1 { margin:0; font-size:24px; text-transform:uppercase; letter-spacing:1px; }
+    .meta-date { text-align:right; font-size:14px; font-weight:bold; margin-top:5px; }
 
     .dashboard {
       display:flex;
       gap:30px;
       margin-bottom:30px;
+      align-items:stretch;
     }
 
     .score {
@@ -56,47 +60,64 @@
       background:#f4f4f4;
       border-left:6px solid #000;
       padding:15px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
     }
 
-    .score-val { font-size:36px; font-weight:bold; }
-    .score-lbl { font-size:11px; text-transform:uppercase; color:#555; }
+    .score-val { font-size:36px; font-weight:bold; line-height:1; }
+    .score-lbl { font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#555; margin-top:6px; }
 
+    /* --- KPI BOXES: match annual audit style --- */
     .kpis {
       flex:1;
       display:grid;
       grid-template-columns:repeat(3,1fr);
       gap:10px;
+      align-items:stretch;
     }
 
-    .kpi {
+    .alert-box {
+      background:#fff;
       border:1px solid #000;
       padding:10px;
       text-align:center;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      position:relative;
     }
-
-    table {
-      width:100%;
-      border-collapse:collapse;
+    .alert-num {
+      font-size:24px;
+      font-weight:bold;
+      line-height:1.1;
+      color:#000;
+    }
+    .alert-label {
       font-size:11px;
-    }
-
-    th, td {
-      border:1px solid #000;
-      padding:6px;
-    }
-
-    th {
-      background:#eee;
       text-transform:uppercase;
+      color:#000;
+      margin-top:6px;
+      letter-spacing:1px;
     }
+
+    h3 { font-size:14px; text-transform:uppercase; border-bottom:1px solid #ccc; margin:0 0 6px 0; padding-bottom:4px; }
+
+    table { width:100%; border-collapse:collapse; font-size:11px; margin-top:10px; }
+    th, td { border:1px solid #000; padding:6px; vertical-align:top; }
+    th { background:#eee; font-weight:bold; text-transform:uppercase; text-align:left; }
 
     .problem-text { font-weight:bold; }
+
+    thead { display:table-header-group; }
+    tr { page-break-inside:avoid; break-inside:avoid; }
 
     .footer {
       margin-top:auto;
       border-top:1px solid #000;
       padding-top:10px;
       font-size:10px;
+      color:#333;
       display:flex;
       justify-content:space-between;
     }
@@ -107,8 +128,10 @@
       display:flex;
       justify-content:center;
       gap:10px;
+      align-items:center;
       font-weight:bold;
     }
+    .langbar select { padding:6px 10px; border:1px solid #000; border-radius:6px; background:#fff; }
 
     .btn-print {
       width:220px;
@@ -119,29 +142,30 @@
       text-align:center;
       cursor:pointer;
       border-radius:5px;
+      font-weight:bold;
     }
+    .btn-print:hover { background:#000; }
   </style>
 </head>
 
 <body>
 
-<!-- Language select -->
-<div class="no-print langbar">
-  <label>
-    Jazyk:
-    <select id="langSelect">
-      <option value="cz">CZ</option>
-      <option value="en">EN</option>
-      <option value="de">DE</option>
-    </select>
-  </label>
-</div>
+  <div class="no-print langbar">
+    <label>
+      Jazyk:
+      <select id="langSelect" aria-label="Language">
+        <option value="cz">CZ</option>
+        <option value="en">EN</option>
+        <option value="de">DE</option>
+      </select>
+    </label>
+  </div>
 
-<div class="no-print btn-print" onclick="window.print()">🖨️ Print</div>
+  <div class="no-print btn-print" onclick="window.print()">🖨️ Print</div>
 
-<div class="page" id="report">
-  <div style="text-align:center; padding-top:150px; color:#888;">Načítám data…</div>
-</div>
+  <div class="page" id="report">
+    <div style="text-align:center; padding-top:150px; color:#888;">Načítám data…</div>
+  </div>
 
 <script>
 /* ================= LANGUAGE ================= */
@@ -212,36 +236,54 @@ const STATUS = {
   "Doručeno": { en:"Delivered", de:"Geliefert" }
 };
 
-function t(k){ return UI[UI_LANG][k] || k; }
+function t(k){ return UI[UI_LANG]?.[k] || k; }
 
 function trStatus(s){
-  if(UI_LANG==="cz") return s;
-  return STATUS[s]?.[UI_LANG] || s;
+  const v = String(s || "").trim();
+  if(UI_LANG==="cz") return v;
+  return STATUS[v]?.[UI_LANG] || v;
 }
 
 function trProblem(text){
-  if(UI_LANG==="cz") return text;
-  return text.replace(/Zpoždění (\d+) dnů/i, (_,d)=>`Delay ${d} ${t("days")}`);
+  const s = String(text || "").trim();
+  if(!s) return s;
+  if(UI_LANG==="cz") return s;
+
+  if(UI_LANG==="en") {
+    return s.replace(/Zpoždění\s+(\d+)\s+dnů/i, (_,d)=>`Delay ${d} ${t("days")}`);
+  }
+  if(UI_LANG==="de") {
+    return s.replace(/Zpoždění\s+(\d+)\s+dnů/i, (_,d)=>`Verspätung ${d} ${t("days")}`);
+  }
+  return s;
 }
 
 /* ================= RENDER ================= */
 
 function render(record){
   LAST_RECORD = record;
+
   const raw = record?.Tiskova_Data;
   if(!raw) return;
 
-  const data = JSON.parse(raw);
+  let data;
+  try { data = JSON.parse(raw); }
+  catch(e) {
+    document.getElementById("report").innerHTML =
+      `<div style="color:red; text-align:center; padding:50px;">CHYBA DAT:<br>${raw}</div>`;
+    return;
+  }
+
   const h = data.hlavicka;
 
   let html = `
     <div class="header">
       <div>
-        <img src="https://www.streicher.cz/fileadmin/Vorlage/images/logo.png" class="logo-img">
+        <img src="https://www.streicher.cz/fileadmin/Vorlage/images/logo.png" class="logo-img" alt="Logo">
         <h1>${h.dodavatel}</h1>
-        <div>${t("quarterly")}</div>
+        <div style="font-size:12px; text-transform:uppercase; color:#444;">${t("quarterly")}</div>
       </div>
-      <div>${t("period")}: ${h.obdobi}</div>
+      <div class="meta-date">${t("period")}: ${h.obdobi}</div>
     </div>
 
     <div class="dashboard">
@@ -251,9 +293,20 @@ function render(record){
       </div>
 
       <div class="kpis">
-        <div class="kpi"><b>${h.obrat}</b><br>${t("turnover")}</div>
-        <div class="kpi"><b>${h.pocet_celkem}</b><br>${t("orders")}</div>
-        <div class="kpi"><b>${h.pocet_zpozdenych}</b><br>${t("delayed")}</div>
+        <div class="alert-box">
+          <div class="alert-num" style="white-space:nowrap;">${h.obrat}</div>
+          <div class="alert-label">${t("turnover")}</div>
+        </div>
+
+        <div class="alert-box">
+          <div class="alert-num">${h.pocet_celkem}</div>
+          <div class="alert-label">${t("orders")}</div>
+        </div>
+
+        <div class="alert-box">
+          <div class="alert-num">${h.pocet_zpozdenych}</div>
+          <div class="alert-label">${t("delayed")}</div>
+        </div>
       </div>
     </div>
 
@@ -261,32 +314,34 @@ function render(record){
     <table>
       <thead>
         <tr>
-          <th>${t("issued")}</th>
-          <th>${t("order")}</th>
-          <th>${t("price")}</th>
-          <th>${t("status")}</th>
-          <th>${t("note")}</th>
+          <th style="width:12%;">${t("issued")}</th>
+          <th style="width:15%;">${t("order")}</th>
+          <th style="width:18%; text-align:right;">${t("price")}</th>
+          <th style="width:15%; padding-left:10px;">${t("status")}</th>
+          <th style="width:40%;">${t("note")}</th>
         </tr>
       </thead>
       <tbody>
   `;
 
-  if(data.radky.length){
-    data.radky.forEach(r=>{
-      html+=`
+  if (data.radky && data.radky.length > 0) {
+    data.radky.forEach(r => {
+      const prob = r.je_problem ? `<span class="problem-text">${trProblem(r.text_problemu)}</span>` : "";
+      html += `
         <tr>
           <td>${r.datum}</td>
           <td>${r.cislo}</td>
-          <td style="text-align:right">${r.cena}</td>
-          <td>${trStatus(r.status)}</td>
-          <td>${r.je_problem ? `<span class="problem-text">${trProblem(r.text_problemu)}</span>` : ""}</td>
-        </tr>`;
+          <td style="text-align:right;">${r.cena}</td>
+          <td style="padding-left:10px;">${trStatus(r.status)}</td>
+          <td>${prob}</td>
+        </tr>
+      `;
     });
   } else {
-    html+=`<tr><td colspan="5" style="text-align:center">${t("noOrders")}</td></tr>`;
+    html += `<tr><td colspan="5" style="text-align:center; padding:20px;">${t("noOrders")}</td></tr>`;
   }
 
-  html+=`
+  html += `
       </tbody>
     </table>
 
@@ -302,13 +357,17 @@ function render(record){
 /* ================= INIT ================= */
 
 const sel = document.getElementById("langSelect");
-UI_LANG = localStorage.getItem(LS_KEY) || "cz";
+try {
+  const stored = localStorage.getItem(LS_KEY);
+  if (stored === "cz" || stored === "en" || stored === "de") UI_LANG = stored;
+} catch(e) {}
+
 sel.value = UI_LANG;
 
-sel.addEventListener("change", ()=>{
+sel.addEventListener("change", () => {
   UI_LANG = sel.value;
-  localStorage.setItem(LS_KEY, UI_LANG);
-  if(LAST_RECORD) render(LAST_RECORD);
+  try { localStorage.setItem(LS_KEY, UI_LANG); } catch(e) {}
+  if (LAST_RECORD) render(LAST_RECORD);
 });
 
 grist.ready({ columns:["Tiskova_Data"], requiredAccess:"read table" });
