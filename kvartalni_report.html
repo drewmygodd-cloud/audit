@@ -84,15 +84,180 @@
 </head>
 <body>
 
-  <div class="no-print btn-print" onclick="window.print()">🖨️ Vytisknout Report</div>
+  <div class="no-print btn-print" onclick="window.print()" data-i18n="printReport">🖨️ Vytisknout Report</div>
 
   <div class="page" id="report">
-    <div style="text-align: center; padding-top: 150px; color: #888;">Načítám data...</div>
+    <div style="text-align: center; padding-top: 150px; color: #888;" data-i18n="loading">Načítám data...</div>
   </div>
 
 <script>
+  // ---------------------------
+  // I18N (CZ <-> EN) driven by Grist toggle
+  // ---------------------------
+  let UI_ENGLISH = false;
+
+  function toBool(v) {
+    if (v === true || v === 1) return true;
+    if (v === false || v === 0 || v == null) return false;
+    if (typeof v === "string") return v.toLowerCase() === "true";
+    return false;
+  }
+
+  const I18N_UI_CZ = {
+    printReport: "🖨️ Vytisknout Report",
+    loading: "Načítám data...",
+    emptyInput: "Žádná data (prázdný vstup).",
+    dataError: "CHYBA DAT",
+    pythonError: "CHYBA PYTHONU",
+    quarterlyEvaluation: "Kvartální vyhodnocení",
+    period: "Období",
+    overallRating: "Celkové hodnocení",
+    turnover: "Obrat",
+    orders: "Objednávek",
+    delayed: "Opožděných",
+    detailOverview: "Detailní přehled",
+    issued: "Vystaveno",
+    order: "Objednávka",
+    price: "Cena",
+    status: "Status",
+    noteProblem: "Poznámka / Problém",
+    noOrders: "Žádné objednávky.",
+    internalReport: "Interní report hodnocení dodavatelů",
+    printed: "Vytištěno",
+    totalDelayedOrders: "Celkem {n} zpožděných objednávek",
+    outOfTotal: "(Z celkového počtu {n} objednávek)",
+    averageDelay: "Průměrné zpoždění: {n} dnů",
+    days: "dnů",
+    vs: "vs",
+    noChange: "beze změny"
+  };
+
+  const I18N_UI_EN = {
+    printReport: "🖨️ Print Report",
+    loading: "Loading data...",
+    emptyInput: "No data (empty input).",
+    dataError: "DATA ERROR",
+    pythonError: "PYTHON ERROR",
+    quarterlyEvaluation: "Quarterly evaluation",
+    period: "Period",
+    overallRating: "Overall rating",
+    turnover: "Turnover",
+    orders: "Orders",
+    delayed: "Delayed",
+    detailOverview: "Detailed overview",
+    issued: "Issued",
+    order: "Order",
+    price: "Price",
+    status: "Status",
+    noteProblem: "Note / Issue",
+    noOrders: "No orders.",
+    internalReport: "Internal supplier evaluation report",
+    printed: "Printed",
+    totalDelayedOrders: "Total {n} delayed orders",
+    outOfTotal: "(Out of {n} total orders)",
+    averageDelay: "Average delay: {n} days",
+    days: "days",
+    vs: "vs",
+    noChange: "no change"
+  };
+
+  // Status translations (CZ -> EN). Keep passthrough if already EN.
+  const STATUS_TRANSLATIONS = {
+    "Opožděno": "Delayed",
+    "Doručeno": "Delivered"
+  };
+
+  // Problem-type translations (same base as in previous widget, plus uppercase variants)
+  const PROBLEM_TRANSLATIONS = {
+    "Reklamace": "Claim",
+    "Kvalita": "Quality Issue",
+    "Vada": "Defect",
+    "Stížnost": "Complaint",
+    "Stiznost": "Complaint",
+    "Komunikace": "Communication",
+    "Dodání": "Delivery Issue",
+    "Chování": "Behavior",
+    "Doklady": "Documents",
+
+    "REKLAMACE": "CLAIM",
+    "KVALITA": "QUALITY ISSUE",
+    "VADA": "DEFECT",
+    "STÍŽNOST": "COMPLAINT",
+    "STIZNOST": "COMPLAINT",
+    "KOMUNIKACE": "COMMUNICATION",
+    "DODÁNÍ": "DELIVERY ISSUE",
+    "CHOVÁNÍ": "BEHAVIOR",
+    "DOKLADY": "DOCUMENTS"
+  };
+
+  function t(key, fallback) {
+    const dict = UI_ENGLISH ? I18N_UI_EN : I18N_UI_CZ;
+    return (key && Object.prototype.hasOwnProperty.call(dict, key)) ? dict[key] : (fallback ?? key);
+  }
+
+  function applyI18N(rootEl) {
+    const root = rootEl || document;
+    root.querySelectorAll("[data-i18n]").forEach(el => {
+      const key = el.getAttribute("data-i18n");
+      if (!key) return;
+      el.innerText = t(key, el.innerText);
+    });
+  }
+
+  function formatTemplate(str, params) {
+    return String(str).replace(/\{(\w+)\}/g, (_, k) => (params && params[k] != null ? params[k] : `{${k}}`));
+  }
+
+  function trStatus(status) {
+    const s = String(status || "").trim();
+    if (!UI_ENGLISH) return s;
+    return STATUS_TRANSLATIONS[s] || s;
+  }
+
+  function trProblemToken(token) {
+    const s = String(token || "").trim();
+    if (!UI_ENGLISH) return s;
+
+    if (Object.prototype.hasOwnProperty.call(PROBLEM_TRANSLATIONS, s)) return PROBLEM_TRANSLATIONS[s];
+
+    // try without diacritics
+    const norm = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (Object.prototype.hasOwnProperty.call(PROBLEM_TRANSLATIONS, norm)) return PROBLEM_TRANSLATIONS[norm];
+
+    return s;
+  }
+
+  // Translates "Zpoždění X dnů" -> "Delay X days" (only in EN mode).
+  // Leaves free text untouched.
+  function trProblemText(text) {
+    const s = String(text || "").trim();
+    if (!s) return s;
+    if (!UI_ENGLISH) return s;
+
+    // 1) Delay pattern
+    const m = s.match(/^Zpoždění\s+(\d+)\s+dnů$/i);
+    if (m) return `Delay ${m[1]} days`;
+
+    // 2) If it's a known uppercase token ("REKLAMACE", ...)
+    const token = trProblemToken(s);
+    if (token !== s) return token;
+
+    // 3) If it's a comma-separated list, translate known parts only
+    if (s.includes(",")) {
+      return s.split(",").map(part => {
+        const p = part.trim();
+        const dm = p.match(/^Zpoždění\s+(\d+)\s+dnů$/i);
+        if (dm) return `Delay ${dm[1]} days`;
+        return trProblemToken(p);
+      }).join(", ");
+    }
+
+    // 4) Otherwise: free text (Detail_Problemu) -> keep
+    return s;
+  }
+
   grist.ready({
-    columns: ['Tiskova_Data'],
+    columns: ['Tiskova_Data', 'Tisk_Anglicky'],
     requiredAccess: 'read table'
   });
 
@@ -100,8 +265,11 @@
     const container = document.getElementById('report');
     const rawData = record.Tiskova_Data;
 
+    // Set language from toggle (single source of truth)
+    UI_ENGLISH = toBool(record.Tisk_Anglicky);
+
     if (!rawData) {
-      container.innerHTML = '<div style="text-align:center; padding-top:50px;">Žádná data (prázdný vstup).</div>';
+      container.innerHTML = `<div style="text-align:center; padding-top:50px;">${t("emptyInput","Žádná data (prázdný vstup).")}</div>`;
       return;
     }
 
@@ -109,12 +277,12 @@
     try {
       data = JSON.parse(rawData);
     } catch (e) {
-      container.innerHTML = '<div style="color:red; text-align:center; padding:50px;">CHYBA DAT:<br>' + rawData + '</div>';
+      container.innerHTML = `<div style="color:red; text-align:center; padding:50px;">${t("dataError","CHYBA DAT")}:<br>${rawData}</div>`;
       return;
     }
     
     if (data.error) {
-       container.innerHTML = '<div style="color:red; text-align:center; padding:50px;">CHYBA PYTHONU:<br>' + data.error + '</div>';
+       container.innerHTML = `<div style="color:red; text-align:center; padding:50px;">${t("pythonError","CHYBA PYTHONU")}:<br>${data.error}</div>`;
        return;
     }
 
@@ -137,45 +305,45 @@
         <div>
           <img src="https://www.streicher.cz/fileadmin/Vorlage/images/logo.png" alt="Logo" class="logo-img">
           <h1>${h.dodavatel}</h1>
-          <div style="font-size:12px; text-transform:uppercase; color:#444;">Kvartální vyhodnocení</div>
+          <div style="font-size:12px; text-transform:uppercase; color:#444;" data-i18n="quarterlyEvaluation">Kvartální vyhodnocení</div>
         </div>
         <div class="meta-date">
-          Období: ${h.obdobi}
+          <span data-i18n="period">Období</span>: ${h.obdobi}
         </div>
       </div>
 
       <div class="dashboard-container">
         <div class="score-section">
           <span class="score-val">${h.skore_procenta} %</span>
-          <span class="score-lbl">Celkové hodnocení</span>
+          <span class="score-lbl" data-i18n="overallRating">Celkové hodnocení</span>
           ${trendHtml}
         </div>
 
         <div class="kpi-section">
           <div class="kpi-box">
             <span class="kpi-num" style="white-space: nowrap;">${h.obrat}</span>
-            <span class="kpi-lbl">Obrat</span>
+            <span class="kpi-lbl" data-i18n="turnover">Obrat</span>
           </div>
           <div class="kpi-box">
             <span class="kpi-num">${h.pocet_celkem}</span>
-            <span class="kpi-lbl">Objednávek</span>
+            <span class="kpi-lbl" data-i18n="orders">Objednávek</span>
           </div>
           <div class="kpi-box">
             <span class="kpi-num">${h.pocet_zpozdenych}</span>
-            <span class="kpi-lbl">Opožděných</span>
+            <span class="kpi-lbl" data-i18n="delayed">Opožděných</span>
           </div>
         </div>
       </div>
 
-      <h3 style="font-size:14px; text-transform:uppercase; border-bottom:1px solid #ccc; margin-bottom:5px;">Detailní přehled</h3>
+      <h3 style="font-size:14px; text-transform:uppercase; border-bottom:1px solid #ccc; margin-bottom:5px;" data-i18n="detailOverview">Detailní přehled</h3>
       <table>
         <thead>
           <tr>
-            <th style="width: 12%">Vystaveno</th>
-            <th style="width: 15%">Objednávka</th>
-            <th style="width: 18%; text-align: right;">Cena</th>
-            <th style="width: 15%; padding-left: 10px;">Status</th>
-            <th style="width: 40%">Poznámka / Problém</th>
+            <th style="width: 12%" data-i18n="issued">Vystaveno</th>
+            <th style="width: 15%" data-i18n="order">Objednávka</th>
+            <th style="width: 18%; text-align: right;" data-i18n="price">Cena</th>
+            <th style="width: 15%; padding-left: 10px;" data-i18n="status">Status</th>
+            <th style="width: 40%" data-i18n="noteProblem">Poznámka / Problém</th>
           </tr>
         </thead>
         <tbody>
@@ -183,19 +351,19 @@
 
     if (data.radky && data.radky.length > 0) {
       data.radky.forEach(r => {
-        let probContent = r.je_problem ? `<span class="problem-text">${r.text_problemu}</span>` : '';
+        let probContent = r.je_problem ? `<span class="problem-text">${trProblemText(r.text_problemu)}</span>` : '';
         html += `
           <tr>
             <td>${r.datum}</td>
             <td>${r.cislo}</td>
             <td style="text-align: right;">${r.cena}</td>
-            <td style="padding-left: 10px;">${r.status}</td>
+            <td style="padding-left: 10px;">${trStatus(r.status)}</td>
             <td>${probContent}</td>
           </tr>
         `;
       });
     } else {
-        html += `<tr><td colspan="5" style="text-align:center; padding: 20px;">Žádné objednávky.</td></tr>`;
+        html += `<tr><td colspan="5" style="text-align:center; padding: 20px;">${t("noOrders","Žádné objednávky.")}</td></tr>`;
     }
 
     html += `
@@ -203,16 +371,17 @@
       </table>
 
       <div class="footer">
-        <span>Interní report hodnocení dodavatelů</span>
-        <span>Vytištěno: ${new Date().toLocaleDateString('cs-CZ')}</span>
+        <span data-i18n="internalReport">Interní report hodnocení dodavatelů</span>
+        <span><span data-i18n="printed">Vytištěno</span>: ${new Date().toLocaleDateString(UI_ENGLISH ? 'en-US' : 'cs-CZ')}</span>
       </div>
     `;
 
     container.innerHTML = html;
+
+    // Apply translation keys inside generated HTML
+    applyI18N(container);
   });
 </script>
 
 </body>
 </html>
-
-
