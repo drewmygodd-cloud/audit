@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Audit Dodavatele</title>
-  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js?v=1"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js?v=1"></script>
   <style>
     /* ZÁKLADNÍ STYLY - CLEAN MONOCHROME */
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f0f0; margin: 0; padding: 20px; color: #000; }
@@ -26,10 +26,10 @@
 
     /* DASHBOARD GRID */
     .dashboard-grid {
-        display: grid;
-        grid-template-columns: 1.8fr 1.5fr 0.8fr 1fr;
-        gap: 15px;
-        margin-bottom: 30px;
+      display: grid;
+      grid-template-columns: 1.8fr 1.5fr 0.8fr 1fr;
+      gap: 15px;
+      margin-bottom: 30px;
     }
 
     /* Boxy */
@@ -59,9 +59,9 @@
     .trend-neutral { color: #7f8c8d; }
 
     .chart-container { position: relative; height: 250px; width: 100%; margin-top: 20px; }
-    .btn-print { display: block; width: 100%; max-width: 200px; margin: 0 auto 20px auto; padding: 10px; background: #333; color: white; text-align: center; cursor: pointer; border-radius: 5px; }
+    .btn-print { display: block; width: 100%; max-width: 220px; margin: 0 auto 20px auto; padding: 10px; background: #333; color: white; text-align: center; cursor: pointer; border-radius: 5px; }
 
-    /* Language toggle bar (screen only) */
+    /* Language bar */
     .langbar {
       max-width: 210mm;
       margin: 0 auto 10px auto;
@@ -71,16 +71,20 @@
       align-items: center;
       font-weight: bold;
     }
-    .langbar input { transform: translateY(1px); }
+    .langbar select { padding: 6px 10px; border: 1px solid #000; border-radius: 6px; background: #fff; }
   </style>
 </head>
 <body>
 
-  <!-- Language toggle (works everywhere, no Grist columns needed) -->
+  <!-- Language select (CZ/EN/DE) -->
   <div class="no-print langbar">
-    <label style="display:flex; gap:8px; align-items:center;">
-      <input type="checkbox" id="langToggle">
-      English
+    <label style="display:flex; gap:10px; align-items:center;">
+      <span data-i18n="languageLabel">Jazyk</span>:
+      <select id="langSelect" aria-label="Language">
+        <option value="cz">CZ</option>
+        <option value="en">EN</option>
+        <option value="de">DE</option>
+      </select>
     </label>
   </div>
 
@@ -103,26 +107,26 @@
     </div>
 
     <div class="dashboard-grid">
-        <div class="score-box">
-            <span style="font-size: 12px; color: #000; text-transform: uppercase;" data-i18n="ratingLabel">Hodnocení</span>
-            <div class="value" id="totalScore">0 %</div>
-            <div id="trendDisplay" style="font-size: 14px; margin-top: 5px;"></div>
-        </div>
+      <div class="score-box">
+        <span style="font-size: 12px; color: #000; text-transform: uppercase;" data-i18n="ratingLabel">Hodnocení</span>
+        <div class="value" id="totalScore">0 %</div>
+        <div id="trendDisplay" style="font-size: 14px; margin-top: 5px;"></div>
+      </div>
 
-        <div class="alert-box">
-            <div class="alert-num" id="turnoverVal">0 Kč</div>
-            <div class="alert-label" data-i18n="annualTurnoverLabel">Roční obrat</div>
-        </div>
+      <div class="alert-box">
+        <div class="alert-num" id="turnoverVal">0 Kč</div>
+        <div class="alert-label" data-i18n="annualTurnoverLabel">Roční obrat</div>
+      </div>
 
-        <div class="alert-box" id="boxClaims">
-            <div class="alert-num" id="countClaims">0</div>
-            <div class="alert-label" data-i18n="claimsLabel">Reklamace</div>
-        </div>
+      <div class="alert-box" id="boxClaims">
+        <div class="alert-num" id="countClaims">0</div>
+        <div class="alert-label" data-i18n="claimsLabel">Reklamace</div>
+      </div>
 
-        <div class="alert-box" id="boxDelays">
-            <div class="alert-num" id="countDelays">0 <span class="alert-sub">/ 0</span></div>
-            <div class="alert-label" data-i18n="delayedTotalLabel">Zpožděné / Celkem</div>
-        </div>
+      <div class="alert-box" id="boxDelays">
+        <div class="alert-num" id="countDelays">0 <span class="alert-sub">/ 0</span></div>
+        <div class="alert-label" data-i18n="delayedTotalLabel">Zpožděné / Celkem</div>
+      </div>
     </div>
 
     <h3 data-i18n="resultsHeading">Výsledky</h3>
@@ -140,8 +144,8 @@
     <div id="managerNote" style="border: 1px solid #000; min-height: 100px; padding: 10px; font-style: italic; color: #000;"></div>
 
     <div style="margin-top: 100px; padding-top: 0; display: flex; justify-content: space-between;">
-        <div style="text-align:center; width:40%; border-top:1px solid #000; padding-top:5px;" data-i18n="supplierSign">Dodavatel</div>
-        <div style="text-align:center; width:40%; border-top:1px solid #000; padding-top:5px;" data-i18n="auditorSign">Auditor</div>
+      <div style="text-align:center; width:40%; border-top:1px solid #000; padding-top:5px;" data-i18n="supplierSign">Dodavatel</div>
+      <div style="text-align:center; width:40%; border-top:1px solid #000; padding-top:5px;" data-i18n="auditorSign">Auditor</div>
     </div>
   </div>
 
@@ -150,18 +154,18 @@
     <div class="chart-container"><canvas id="quarterChart"></canvas></div>
 
     <div id="sectionClaims" style="display:none; margin-top: 30px;">
-        <h3 style="padding-bottom:5px;" data-i18n="claimsComplaintsHeading">Reklamace a stížnosti</h3>
-        <table style="border: 1px solid #000">
-            <thead class="claim-header">
-              <tr>
-                <th data-i18n="issuedDateCol">Datum vystavení</th>
-                <th data-i18n="orderCol">Objednávka</th>
-                <th data-i18n="typeCol">Typ</th>
-                <th data-i18n="issueDetailCol">Detail problému</th>
-              </tr>
-            </thead>
-            <tbody id="tableClaimsBody"></tbody>
-        </table>
+      <h3 style="padding-bottom:5px;" data-i18n="claimsComplaintsHeading">Reklamace a stížnosti</h3>
+      <table style="border: 1px solid #000">
+        <thead class="claim-header">
+          <tr>
+            <th data-i18n="issuedDateCol">Datum vystavení</th>
+            <th data-i18n="orderCol">Objednávka</th>
+            <th data-i18n="typeCol">Typ</th>
+            <th data-i18n="issueDetailCol">Detail problému</th>
+          </tr>
+        </thead>
+        <tbody id="tableClaimsBody"></tbody>
+      </table>
     </div>
 
     <h3 style="margin-top: 30px;" data-i18n="delayedOrdersHeading">Zpožděné objednávky</h3>
@@ -181,7 +185,12 @@
 
   <script>
     // ---------------------------
-    // Helpers (MUST exist)
+    // Constants
+    // ---------------------------
+    const MAX_DELAY_ROWS = 10; // <- change the individual rows limit here
+
+    // ---------------------------
+    // Helpers
     // ---------------------------
     function safeSet(id, val) {
       const el = document.getElementById(id);
@@ -193,22 +202,28 @@
       return "---";
     }
 
-    // currency stays CZK; only formatting changes with locale
+    function localeOfLang(lang) {
+      if (lang === "en") return "en-US";
+      if (lang === "de") return "de-DE";
+      return "cs-CZ";
+    }
+
     function formatCurrency(val) {
       if (typeof val === 'number') {
-        return val.toLocaleString(UI_ENGLISH ? 'en-US' : 'cs-CZ', { style: 'currency', currency: 'CZK', maximumFractionDigits: 0 });
+        return val.toLocaleString(localeOfLang(UI_LANG), { style: 'currency', currency: 'CZK', maximumFractionDigits: 0 });
       }
       return "---";
     }
 
     // ---------------------------
-    // I18N (CZ <-> EN) driven by localStorage (no Grist columns needed)
+    // I18N (CZ / EN / DE) via localStorage
     // ---------------------------
-    let UI_ENGLISH = false;
+    let UI_LANG = "cz"; // "cz" | "en" | "de"
     let LAST_MAPPED = null;
-    const LS_KEY = "audit_widget_lang_en";
+    const LS_KEY = "audit_widget_lang"; // stores "cz"|"en"|"de"
 
     const I18N_UI_CZ = {
+      languageLabel: "Jazyk",
       printAudit: "🖨️ Vytisknout Audit",
       auditSupplierTitle: "Audit Dodavatele",
       annualEvaluation: "Výroční vyhodnocení",
@@ -246,10 +261,16 @@
       performanceLabel: "Výkon",
       vs: "vs",
       noChange: "beze změny",
-      days: "dnů"
+      days: "dnů",
+      total: "Celkem",
+      delayedOrders: "zpožděných objednávek",
+      outOf: "Z celkového počtu",
+      totalOrders: "objednávek",
+      avgDelay: "Průměrné zpoždění"
     };
 
     const I18N_UI_EN = {
+      languageLabel: "Language",
       printAudit: "🖨️ Print Audit",
       auditSupplierTitle: "Supplier Audit",
       annualEvaluation: "Annual evaluation",
@@ -287,45 +308,102 @@
       performanceLabel: "Performance",
       vs: "vs",
       noChange: "no change",
-      days: "days"
+      days: "days",
+      total: "Total",
+      delayedOrders: "delayed orders",
+      outOf: "Out of",
+      totalOrders: "total orders",
+      avgDelay: "Average delay"
     };
 
-    const I18N_DATA = {
-      // Delay reasons (CZ -> EN)
-      "Výroba": "Production",
-      "Doprava": "Transport",
-      "Materiál": "Material shortage",
-      "Kapacita": "Capacity issues",
-      "Jiné": "Other",
-      "Neznámý": "Unknown",
-      "Dodavatel": "Vendor fault",
-      "Čekání": "Waiting",
+    const I18N_UI_DE = {
+      languageLabel: "Sprache",
+      printAudit: "🖨️ Audit drucken",
+      auditSupplierTitle: "Lieferantenaudit",
+      annualEvaluation: "Jährliche Bewertung",
+      periodLabel: "Zeitraum",
+      dateLabel: "Datum",
+      supplierLabel: "Lieferant",
+      ratingLabel: "Bewertung",
+      annualTurnoverLabel: "Jahresumsatz",
+      claimsLabel: "Reklamationen",
+      delayedTotalLabel: "Verspätet / Gesamt",
+      resultsHeading: "Ergebnisse",
+      hardDataRow: "Verzögerungen, Beschwerden und Reklamationen",
+      environmentRow: "Umwelt",
+      communicationRow: "Kommunikation",
+      serviceRow: "Service",
+      innovationRow: "Innovation",
+      qualificationRow: "Mitarbeiterqualifikation",
+      creditworthinessRow: "Bonität",
+      notesHeading: "Notizen",
+      supplierSign: "Lieferant",
+      auditorSign: "Auditor",
+      quarterlyRatingHeading: "Quartalsbewertung",
+      claimsComplaintsHeading: "Reklamationen und Beschwerden",
+      issuedDateCol: "Ausstellungsdatum",
+      orderCol: "Bestellung",
+      typeCol: "Typ",
+      issueDetailCol: "Problemdetail",
+      delayedOrdersHeading: "Verspätete Bestellungen",
+      deliveryDueCol: "Liefertermin",
+      numberCol: "Nummer",
+      delayCol: "Verzögerung",
+      reasonCol: "Grund",
+      noDelaysMsg: "Keine Verzögerungen in diesem Zeitraum.",
+      placeholderNotes: "(Platz für Notizen...)",
+      performanceLabel: "Leistung",
+      vs: "gegen",
+      noChange: "keine Änderung",
+      days: "Tage",
+      total: "Insgesamt",
+      delayedOrders: "verspätete Bestellungen",
+      outOf: "Von insgesamt",
+      totalOrders: "Bestellungen",
+      avgDelay: "Durchschnittliche Verzögerung"
+    };
 
-      // Claim types (CZ -> EN)
-      "Reklamace": "Claim",
-      "Kvalita": "Quality Issue",
-      "Vada": "Defect",
-      "Stížnost": "Complaint",
-      "Stiznost": "Complaint",
-      "Komunikace": "Communication",
-      "Dodání": "Delivery Issue",
-      "Chování": "Behavior",
-      "Doklady": "Documents",
+    // Data translations (CZ -> EN/DE). Keys are raw values you store in JSON.
+    const I18N_DATA = {
+      "Výroba":     { en: "Production",        de: "Produktion" },
+      "Doprava":    { en: "Transport",         de: "Transport" },
+      "Materiál":   { en: "Material shortage", de: "Materialmangel" },
+      "Kapacita":   { en: "Capacity issues",   de: "Kapazitätsprobleme" },
+      "Jiné":       { en: "Other",             de: "Sonstiges" },
+      "Neznámý":    { en: "Unknown",           de: "Unbekannt" },
+      "Dodavatel":  { en: "Vendor fault",      de: "Fehler des Lieferanten" },
+      "Čekání":     { en: "Waiting",           de: "Warten" },
+
+      "Reklamace":  { en: "Claim",             de: "Reklamation" },
+      "Kvalita":    { en: "Quality Issue",     de: "Qualitätsproblem" },
+      "Vada":       { en: "Defect",            de: "Defekt" },
+      "Stížnost":   { en: "Complaint",         de: "Beschwerde" },
+      "Stiznost":   { en: "Complaint",         de: "Beschwerde" },
+      "Komunikace": { en: "Communication",     de: "Kommunikation" },
+      "Dodání":     { en: "Delivery Issue",    de: "Lieferproblem" },
+      "Chování":    { en: "Behavior",          de: "Verhalten" },
+      "Doklady":    { en: "Documents",         de: "Dokumente" },
 
       // Uppercase variants
-      "REKLAMACE": "CLAIM",
-      "KVALITA": "QUALITY ISSUE",
-      "VADA": "DEFECT",
-      "STÍŽNOST": "COMPLAINT",
-      "STIZNOST": "COMPLAINT",
-      "KOMUNIKACE": "COMMUNICATION",
-      "DODÁNÍ": "DELIVERY ISSUE",
-      "CHOVÁNÍ": "BEHAVIOR",
-      "DOKLADY": "DOCUMENTS"
+      "REKLAMACE":  { en: "CLAIM",             de: "REKLAMATION" },
+      "KVALITA":    { en: "QUALITY ISSUE",     de: "QUALITÄTSPROBLEM" },
+      "VADA":       { en: "DEFECT",            de: "DEFEKT" },
+      "STÍŽNOST":   { en: "COMPLAINT",         de: "BESCHWERDE" },
+      "STIZNOST":   { en: "COMPLAINT",         de: "BESCHWERDE" },
+      "KOMUNIKACE": { en: "COMMUNICATION",     de: "KOMMUNIKATION" },
+      "DODÁNÍ":     { en: "DELIVERY ISSUE",    de: "LIEFERPROBLEM" },
+      "CHOVÁNÍ":    { en: "BEHAVIOR",          de: "VERHALTEN" },
+      "DOKLADY":    { en: "DOCUMENTS",         de: "DOKUMENTE" }
     };
 
+    function dictUI() {
+      if (UI_LANG === "de") return I18N_UI_DE;
+      if (UI_LANG === "en") return I18N_UI_EN;
+      return I18N_UI_CZ;
+    }
+
     function t(key, fallback) {
-      const dict = UI_ENGLISH ? I18N_UI_EN : I18N_UI_CZ;
+      const dict = dictUI();
       return (key && Object.prototype.hasOwnProperty.call(dict, key)) ? dict[key] : (fallback ?? key);
     }
 
@@ -333,13 +411,18 @@
       if (text === null || text === undefined) return "";
       const s = String(text).trim();
       if (!s) return s;
+      if (UI_LANG === "cz") return s;
 
-      if (!UI_ENGLISH) return s;
-
-      if (Object.prototype.hasOwnProperty.call(I18N_DATA, s)) return I18N_DATA[s];
+      if (Object.prototype.hasOwnProperty.call(I18N_DATA, s)) {
+        const entry = I18N_DATA[s];
+        if (entry && typeof entry === "object") return entry[UI_LANG] || s;
+      }
 
       const norm = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      if (Object.prototype.hasOwnProperty.call(I18N_DATA, norm)) return I18N_DATA[norm];
+      if (Object.prototype.hasOwnProperty.call(I18N_DATA, norm)) {
+        const entry = I18N_DATA[norm];
+        if (entry && typeof entry === "object") return entry[UI_LANG] || s;
+      }
 
       return s;
     }
@@ -352,56 +435,50 @@
       });
     }
 
-    function loadLangFromLocalStorage() {
+    function loadLang() {
       try {
-        UI_ENGLISH = localStorage.getItem(LS_KEY) === "1";
-      } catch (e) {
-        UI_ENGLISH = false;
-      }
-      const cb = document.getElementById("langToggle");
-      if (cb) cb.checked = UI_ENGLISH;
+        const stored = localStorage.getItem(LS_KEY);
+        if (stored === "cz" || stored === "en" || stored === "de") UI_LANG = stored;
+      } catch (e) {}
+      const sel = document.getElementById("langSelect");
+      if (sel) sel.value = UI_LANG;
     }
 
-    function saveLangToLocalStorage() {
-      try { localStorage.setItem(LS_KEY, UI_ENGLISH ? "1" : "0"); } catch (e) {}
-    }
-
-    function bindLangToggle() {
-      const cb = document.getElementById("langToggle");
-      if (!cb) return;
-      cb.addEventListener("change", () => {
-        UI_ENGLISH = cb.checked;
-        saveLangToLocalStorage();
+    function bindLangSelect() {
+      const sel = document.getElementById("langSelect");
+      if (!sel) return;
+      sel.addEventListener("change", () => {
+        UI_LANG = sel.value;
+        try { localStorage.setItem(LS_KEY, UI_LANG); } catch (e) {}
         applyI18N();
         document.getElementById('currentDate').innerText =
-          new Date().toLocaleDateString(UI_ENGLISH ? 'en-US' : 'cs-CZ');
+          new Date().toLocaleDateString(localeOfLang(UI_LANG));
         if (LAST_MAPPED) renderMapped(LAST_MAPPED);
       });
     }
 
-    // Initial date (CZ default). Will be updated after first render.
+    // initial date
     document.getElementById('currentDate').innerText = new Date().toLocaleDateString('cs-CZ');
     let myChart = null;
 
     function renderMapped(mapped) {
       LAST_MAPPED = mapped;
 
-      // UI labels & locale date
       applyI18N();
       document.getElementById('currentDate').innerText =
-        new Date().toLocaleDateString(UI_ENGLISH ? 'en-US' : 'cs-CZ');
+        new Date().toLocaleDateString(localeOfLang(UI_LANG));
 
       safeSet('supName', mapped.NameCol);
       safeSet('auditYear', mapped.YearCol);
 
       const noteEl = document.getElementById('managerNote');
       if (noteEl) {
-          if (mapped.NoteCol && mapped.NoteCol.trim()) {
-              noteEl.innerText = mapped.NoteCol;
-              noteEl.style.fontStyle = "normal"; noteEl.style.color = "#000";
-          } else {
-              noteEl.innerHTML = '<span class="only-screen" style="color:#aaa;">' + t("placeholderNotes","(Prostor pro poznámky...)") + '</span>';
-          }
+        if (mapped.NoteCol && mapped.NoteCol.trim()) {
+          noteEl.innerText = mapped.NoteCol;
+          noteEl.style.fontStyle = "normal"; noteEl.style.color = "#000";
+        } else {
+          noteEl.innerHTML = '<span class="only-screen" style="color:#aaa;">' + t("placeholderNotes","(Prostor pro poznámky...)") + '</span>';
+        }
       }
 
       const scoreEl = document.getElementById('totalScore');
@@ -419,64 +496,64 @@
 
       const tEl = document.getElementById('trendDisplay');
       if (tEl && typeof mapped.TrendCol === 'number') {
-          const diff = (mapped.TrendCol*100).toFixed(1);
-          let trendHtml = "";
+        const diff = (mapped.TrendCol*100).toFixed(1);
+        let trendHtml = "";
 
-          if (mapped.TrendCol > 0.001) trendHtml = `<span class="trend-up">↗ +${diff}%</span>`;
-          else if (mapped.TrendCol < -0.001) trendHtml = `<span class="trend-down">↘ ${diff}%</span>`;
-          else trendHtml = `<span class="trend-neutral">➡ ${t("noChange","beze změny")}</span>`;
+        if (mapped.TrendCol > 0.001) trendHtml = `<span class="trend-up">↗ +${diff}%</span>`;
+        else if (mapped.TrendCol < -0.001) trendHtml = `<span class="trend-down">↘ ${diff}%</span>`;
+        else trendHtml = `<span class="trend-neutral">➡ ${t("noChange","beze změny")}</span>`;
 
-          const curYear = mapped.YearCol || new Date().getFullYear();
-          const prevYear = curYear - 1;
+        const curYear = mapped.YearCol || new Date().getFullYear();
+        const prevYear = curYear - 1;
 
-          tEl.innerHTML = `${trendHtml} <span style="color:#555; margin-left:5px; font-size: 0.9em;">${t("vs","vs")} ${prevYear}</span>`;
+        tEl.innerHTML = `${trendHtml} <span style="color:#555; margin-left:5px; font-size: 0.9em;">${t("vs","vs")} ${prevYear}</span>`;
       }
 
       // --- ZPOŽDĚNÍ ---
       let delayCount = 0;
       let totalOrders = 0;
       try {
-          const tbody = document.getElementById('delayTableBody');
-          tbody.innerHTML = "";
-          let parsedData = mapped.DelayData ? JSON.parse(mapped.DelayData) : {};
+        const tbody = document.getElementById('delayTableBody');
+        tbody.innerHTML = "";
+        let parsedData = mapped.DelayData ? JSON.parse(mapped.DelayData) : {};
 
-          let delays = parsedData.seznam || [];
-          delayCount = parsedData.zpozdene || 0;
-          totalOrders = parsedData.celkem || 0;
-          let avgDelay = parsedData.prumer || 0;
+        let delays = parsedData.seznam || [];
+        delayCount = parsedData.zpozdene || 0;
+        totalOrders = parsedData.celkem || 0;
+        let avgDelay = parsedData.prumer || 0;
 
-          if (delayCount === 0) {
-              document.getElementById('delayTable').style.display = 'none';
-              document.getElementById('noDelaysMsg').style.display = 'block';
+        if (delayCount === 0) {
+          document.getElementById('delayTable').style.display = 'none';
+          document.getElementById('noDelaysMsg').style.display = 'block';
+        } else {
+          document.getElementById('delayTable').style.display = 'table';
+          document.getElementById('noDelaysMsg').style.display = 'none';
+
+          if (delayCount > MAX_DELAY_ROWS) {
+            tbody.innerHTML = `
+              <tr style="background-color: #f9f9f9; height: 50px;">
+                <td colspan="4" style="text-align: center; vertical-align: middle;">
+                  <strong>${t("total","Celkem")} ${delayCount} ${t("delayedOrders","zpožděných objednávek")}</strong><br>
+                  <span style="font-size: 0.9em; color: #555;">(${t("outOf","Z celkového počtu")} ${totalOrders} ${t("totalOrders","objednávek")})</span><br>
+                  <span style="font-size: 0.9em; color: #555;">${t("avgDelay","Průměrné zpoždění")}: <strong>${avgDelay} ${t("days","dnů")}</strong></span>
+                </td>
+              </tr>
+            `;
           } else {
-              document.getElementById('delayTable').style.display = 'table';
-              document.getElementById('noDelaysMsg').style.display = 'none';
-
-              if (delayCount > 10) {
-                  tbody.innerHTML = `
-                      <tr style="background-color: #f9f9f9; height: 50px;">
-                          <td colspan="4" style="text-align: center; vertical-align: middle;">
-                              <strong>${UI_ENGLISH ? "Total" : "Celkem"} ${delayCount} ${UI_ENGLISH ? "delayed orders" : "zpožděných objednávek"}</strong><br>
-                              <span style="font-size: 0.9em; color: #555;">(${UI_ENGLISH ? "Out of" : "Z celkového počtu"} ${totalOrders} ${UI_ENGLISH ? "total orders" : "objednávek"})</span><br>
-                              <span style="font-size: 0.9em; color: #555;">${UI_ENGLISH ? "Average delay" : "Průměrné zpoždění"}: <strong>${avgDelay} ${t("days","dnů")}</strong></span>
-                          </td>
-                      </tr>
-                  `;
-              } else {
-                  delays.slice(0, 10).forEach(d => {
-                      tbody.innerHTML += `<tr><td>${d.datum}</td><td>${d.cislo}</td><td style="font-weight:bold;">${d.dny} ${t("days","dnů")}</td><td>${tr(d.duvod)}</td></tr>`;
-                  });
-              }
+            delays.slice(0, MAX_DELAY_ROWS).forEach(d => {
+              tbody.innerHTML += `<tr><td>${d.datum}</td><td>${d.cislo}</td><td style="font-weight:bold;">${d.dny} ${t("days","dnů")}</td><td>${tr(d.duvod)}</td></tr>`;
+            });
           }
+        }
       } catch(e) {}
 
       const countEl = document.getElementById('countDelays');
       if (countEl) countEl.innerHTML = `${delayCount} <span class="alert-sub">/ ${totalOrders}</span>`;
       const boxDel = document.getElementById('boxDelays');
       if (boxDel) {
-          boxDel.className = 'alert-box';
-          if (delayCount === 0) boxDel.classList.add('status-ok');
-          else boxDel.classList.add('status-warning');
+        boxDel.className = 'alert-box';
+        if (delayCount === 0) boxDel.classList.add('status-ok');
+        else boxDel.classList.add('status-warning');
       }
 
       // --- REKLAMACE A STÍŽNOSTI ---
@@ -484,34 +561,34 @@
       let listClaims = [];
 
       try {
-          const cBody = document.getElementById('tableClaimsBody');
-          cBody.innerHTML = "";
-          let parsedData = mapped.ClaimData ? JSON.parse(mapped.ClaimData) : {};
+        const cBody = document.getElementById('tableClaimsBody');
+        cBody.innerHTML = "";
+        let parsedData = mapped.ClaimData ? JSON.parse(mapped.ClaimData) : {};
 
-          if (Array.isArray(parsedData)) {
-              listClaims = parsedData;
-              claimCountBox = listClaims.length;
-          } else {
-              listClaims = parsedData.seznam || [];
-              claimCountBox = parsedData.pocet_reklamaci || 0;
-          }
+        if (Array.isArray(parsedData)) {
+          listClaims = parsedData;
+          claimCountBox = listClaims.length;
+        } else {
+          listClaims = parsedData.seznam || [];
+          claimCountBox = parsedData.pocet_reklamaci || 0;
+        }
 
-          if (listClaims.length > 0) {
-              document.getElementById('sectionClaims').style.display = 'block';
-              listClaims.forEach(c => {
-                  cBody.innerHTML += `<tr><td>${c.datum}</td><td><strong>${c.cislo}</strong></td><td><span class="claim-type">${tr(c.typ)}</span></td><td>${c.duvod}</td></tr>`;
-              });
-          } else {
-              document.getElementById('sectionClaims').style.display = 'none';
-          }
+        if (listClaims.length > 0) {
+          document.getElementById('sectionClaims').style.display = 'block';
+          listClaims.forEach(c => {
+            cBody.innerHTML += `<tr><td>${c.datum}</td><td><strong>${c.cislo}</strong></td><td><span class="claim-type">${tr(c.typ)}</span></td><td>${c.duvod}</td></tr>`;
+          });
+        } else {
+          document.getElementById('sectionClaims').style.display = 'none';
+        }
       } catch(e) { console.warn("Claim error", e); }
 
       safeSet('countClaims', claimCountBox);
       const boxClm = document.getElementById('boxClaims');
       if (boxClm) {
-          boxClm.className = 'alert-box';
-          if (claimCountBox > 0) boxClm.classList.add('status-danger');
-          else boxClm.classList.add('status-ok');
+        boxClm.className = 'alert-box';
+        if (claimCountBox > 0) boxClm.classList.add('status-danger');
+        else boxClm.classList.add('status-ok');
       }
 
       // GRAF
@@ -519,32 +596,37 @@
         let cData = mapped.ChartData ? JSON.parse(mapped.ChartData) : {Q1:0,Q2:0,Q3:0,Q4:0};
         const ctx = document.getElementById('quarterChart');
         if (ctx) {
-            if (myChart) myChart.destroy();
-            myChart = new Chart(ctx.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: ['Q1', 'Q2', 'Q3', 'Q4'],
-                    datasets: [{ label: t("performanceLabel","Výkon"), data: [cData.Q1*100, cData.Q2*100, cData.Q3*100, cData.Q4*100], backgroundColor: '#3498db' }]
-                },
-                options: {
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, max: 100, ticks: { callback: function(value) { return value + " %" } } }
-                    },
-                    maintainAspectRatio: false
-                }
-            });
+          if (myChart) myChart.destroy();
+          myChart = new Chart(ctx.getContext('2d'), {
+            type: 'bar',
+            data: {
+              labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+              datasets: [{
+                label: t("performanceLabel","Výkon"),
+                data: [cData.Q1*100, cData.Q2*100, cData.Q3*100, cData.Q4*100],
+                backgroundColor: '#3498db'
+              }]
+            },
+            options: {
+              plugins: { legend: { display: false } },
+              scales: {
+                y: { beginAtZero: true, max: 100, ticks: { callback: function(value) { return value + " %" } } }
+              },
+              maintainAspectRatio: false
+            }
+          });
         }
       } catch(e) {}
     }
 
-    // Init language toggle + UI labels
-    loadLangFromLocalStorage();
-    bindLangToggle();
+    // Init language + UI
+    loadLang();
+    bindLangSelect();
     applyI18N();
     document.getElementById('currentDate').innerText =
-      new Date().toLocaleDateString(UI_ENGLISH ? 'en-US' : 'cs-CZ');
+      new Date().toLocaleDateString(localeOfLang(UI_LANG));
 
+    // Grist binding
     grist.ready({
       columns: [
         { name: "NameCol", title: "Dodavatel", type: 'Text'},
@@ -575,5 +657,3 @@
   </script>
 </body>
 </html>
-
-
