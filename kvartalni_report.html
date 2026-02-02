@@ -4,406 +4,315 @@
   <meta charset="UTF-8">
   <title>Kvartální Hodnocení</title>
   <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+
   <style>
-    /* --- ZÁKLAD --- */
-    body { font-family: 'Segoe UI', sans-serif; background-color: #f0f0f0; margin: 0; padding: 20px; color: #000; }
-    
-    .page { 
-      background: white; 
-      width: 210mm; 
-      min-height: 297mm;
-      margin: 0 auto 20px auto; 
-      padding: 20mm; 
-      box-shadow: 0 0 10px rgba(0,0,0,0.1); 
-      box-sizing: border-box; 
-      display: flex; 
-      flex-direction: column; 
+    body { font-family: 'Segoe UI', sans-serif; background:#f0f0f0; margin:0; padding:20px; color:#000; }
+
+    .page {
+      background:#fff;
+      width:210mm;
+      min-height:297mm;
+      margin:0 auto 20px;
+      padding:20mm;
+      box-shadow:0 0 10px rgba(0,0,0,.1);
+      box-sizing:border-box;
+      display:flex;
+      flex-direction:column;
     }
-    
+
     @media print {
-      body { background: none; padding: 0; }
-      .page { 
-        width: 100%; 
-        height: auto;
-        box-shadow: none; 
-        margin: 0; 
-        padding: 15mm; 
-        display: block;
-      }
-      .no-print { display: none !important; }
-      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+      body { background:none; padding:0; }
+      .page { box-shadow:none; margin:0; padding:15mm; }
+      .no-print { display:none!important; }
+      -webkit-print-color-adjust:exact;
+      print-color-adjust:exact;
     }
 
-    /* --- HLAVIČKA --- */
-    .header { border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-start; }
-    .logo-img { height: 90px; width: auto; max-width: 300px; object-fit: contain; margin-bottom: 15px; display: block; }
-    .header h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }
-    .meta-date { text-align: right; font-size: 14px; font-weight: bold; margin-top: 5px; }
-
-    /* --- DASHBOARD --- */
-    .dashboard-container { display: flex; gap: 30px; margin-bottom: 35px; align-items: stretch; }
-    .score-section { flex: 0 0 30%; background: #f4f4f4; border-left: 6px solid #000; padding: 15px; display: flex; flex-direction: column; justify-content: center; }
-    .score-val { font-size: 36px; font-weight: bold; line-height: 1; }
-    .score-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #555; margin-top: 5px; }
-    
-    .trend-box { font-size: 13px; margin-top: 8px; font-weight: 500; }
-    .t-up { color: #27ae60; } .t-down { color: #c0392b; } .t-neut { color: #7f8c8d; }
-
-    .kpi-section { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .kpi-box { border: 1px solid #000; background: #fff; padding: 10px; display: flex; flex-direction: column; justify-content: center; text-align: center; }
-    .kpi-num { font-size: 20px; font-weight: bold; }
-    .kpi-lbl { font-size: 10px; text-transform: uppercase; color: #555; margin-top: 5px; }
-
-    /* --- TABULKA --- */
-    table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 20px; }
-    th { background-color: #eee; font-weight: bold; text-transform: uppercase; border: 1px solid #000; padding: 6px; text-align: left; }
-    td { border: 1px solid #000; padding: 6px; vertical-align: top; color: #000; }
-    .problem-text { font-weight: bold; text-decoration: none; }
-
-    thead { display: table-header-group; }
-    tr { page-break-inside: avoid; break-inside: avoid; }
-
-    /* --- PATIČKA --- */
-    .footer { 
-      margin-top: auto;
-      padding-top: 20px;
-      border-top: 1px solid #000; 
-      font-size: 10px; 
-      color: #333; 
-      display: flex; 
-      justify-content: space-between; 
+    .header {
+      border-bottom:2px solid #000;
+      padding-bottom:10px;
+      margin-bottom:30px;
+      display:flex;
+      justify-content:space-between;
     }
-    
-    .btn-print { display: block; width: 200px; margin: 0 auto 20px auto; padding: 10px; background: #333; color: white; text-align: center; cursor: pointer; border-radius: 5px; font-weight: bold; }
-    .btn-print:hover { background: #000; }
+
+    .logo-img {
+      height:90px;
+      max-width:300px;
+      object-fit:contain;
+      margin-bottom:10px;
+    }
+
+    h1 { margin:0; font-size:24px; text-transform:uppercase; }
+
+    .dashboard {
+      display:flex;
+      gap:30px;
+      margin-bottom:30px;
+    }
+
+    .score {
+      flex:0 0 30%;
+      background:#f4f4f4;
+      border-left:6px solid #000;
+      padding:15px;
+    }
+
+    .score-val { font-size:36px; font-weight:bold; }
+    .score-lbl { font-size:11px; text-transform:uppercase; color:#555; }
+
+    .kpis {
+      flex:1;
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:10px;
+    }
+
+    .kpi {
+      border:1px solid #000;
+      padding:10px;
+      text-align:center;
+    }
+
+    table {
+      width:100%;
+      border-collapse:collapse;
+      font-size:11px;
+    }
+
+    th, td {
+      border:1px solid #000;
+      padding:6px;
+    }
+
+    th {
+      background:#eee;
+      text-transform:uppercase;
+    }
+
+    .problem-text { font-weight:bold; }
+
+    .footer {
+      margin-top:auto;
+      border-top:1px solid #000;
+      padding-top:10px;
+      font-size:10px;
+      display:flex;
+      justify-content:space-between;
+    }
 
     .langbar {
-      max-width: 210mm;
-      margin: 0 auto 10px auto;
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      align-items: center;
-      font-weight: bold;
+      max-width:210mm;
+      margin:0 auto 10px;
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      font-weight:bold;
     }
-    .langbar input { transform: translateY(1px); }
+
+    .btn-print {
+      width:220px;
+      margin:0 auto 20px;
+      padding:10px;
+      background:#333;
+      color:#fff;
+      text-align:center;
+      cursor:pointer;
+      border-radius:5px;
+    }
   </style>
 </head>
+
 <body>
 
-  <!-- Language toggle (works even in summary tables) -->
-  <div class="no-print langbar">
-    <label style="display:flex; gap:8px; align-items:center;">
-      <input type="checkbox" id="langToggle">
-      English
-    </label>
-  </div>
+<!-- Language select -->
+<div class="no-print langbar">
+  <label>
+    Jazyk:
+    <select id="langSelect">
+      <option value="cz">CZ</option>
+      <option value="en">EN</option>
+      <option value="de">DE</option>
+    </select>
+  </label>
+</div>
 
-  <div class="no-print btn-print" onclick="window.print()" data-i18n="printReport">🖨️ Vytisknout Report</div>
+<div class="no-print btn-print" onclick="window.print()">🖨️ Print</div>
 
-  <div class="page" id="report">
-    <div style="text-align: center; padding-top: 150px; color: #888;" data-i18n="loading">Načítám data...</div>
-  </div>
+<div class="page" id="report">
+  <div style="text-align:center; padding-top:150px; color:#888;">Načítám data…</div>
+</div>
 
 <script>
-  // ---------------------------
-  // I18N (CZ <-> EN) driven by localStorage toggle (no server calls => no 425)
-  // ---------------------------
-  let UI_ENGLISH = false;
-  let LAST_RECORD = null;
+/* ================= LANGUAGE ================= */
 
-  const LS_KEY = "kvartal_widget_lang_en";
+let UI_LANG = "cz";
+let LAST_RECORD = null;
+const LS_KEY = "kvartal_lang";
 
-  const I18N_UI_CZ = {
-    printReport: "🖨️ Vytisknout Report",
-    loading: "Načítám data...",
-    emptyInput: "Žádná data (prázdný vstup).",
-    dataError: "CHYBA DAT",
-    pythonError: "CHYBA PYTHONU",
-    quarterlyEvaluation: "Kvartální vyhodnocení",
+const UI = {
+  cz: {
+    quarterly: "Kvartální vyhodnocení",
     period: "Období",
-    overallRating: "Celkové hodnocení",
+    rating: "Celkové hodnocení",
     turnover: "Obrat",
     orders: "Objednávek",
     delayed: "Opožděných",
-    detailOverview: "Detailní přehled",
+    detail: "Detailní přehled",
     issued: "Vystaveno",
     order: "Objednávka",
     price: "Cena",
     status: "Status",
-    noteProblem: "Poznámka / Problém",
-    noOrders: "Žádné objednávky.",
-    internalReport: "Interní report hodnocení dodavatelů",
+    note: "Poznámka / Problém",
+    internal: "Interní report hodnocení dodavatelů",
     printed: "Vytištěno",
     days: "dnů",
-    noChange: "beze změny"
-  };
-
-  const I18N_UI_EN = {
-    printReport: "🖨️ Print Report",
-    loading: "Loading data...",
-    emptyInput: "No data (empty input).",
-    dataError: "DATA ERROR",
-    pythonError: "PYTHON ERROR",
-    quarterlyEvaluation: "Quarterly evaluation",
+    noOrders: "Žádné objednávky."
+  },
+  en: {
+    quarterly: "Quarterly evaluation",
     period: "Period",
-    overallRating: "Overall rating",
+    rating: "Overall rating",
     turnover: "Turnover",
     orders: "Orders",
     delayed: "Delayed",
-    detailOverview: "Detailed overview",
+    detail: "Detailed overview",
     issued: "Issued",
     order: "Order",
     price: "Price",
     status: "Status",
-    noteProblem: "Note / Issue",
-    noOrders: "No orders.",
-    internalReport: "Internal supplier evaluation report",
+    note: "Note / Issue",
+    internal: "Internal supplier evaluation report",
     printed: "Printed",
     days: "days",
-    noChange: "no change"
-  };
-
-  const STATUS_TRANSLATIONS = {
-    "Opožděno": "Delayed",
-    "Doručeno": "Delivered"
-  };
-
-  const PROBLEM_TRANSLATIONS = {
-    "Reklamace": "Claim",
-    "Kvalita": "Quality Issue",
-    "Vada": "Defect",
-    "Stížnost": "Complaint",
-    "Stiznost": "Complaint",
-    "Komunikace": "Communication",
-    "Dodání": "Delivery Issue",
-    "Chování": "Behavior",
-    "Doklady": "Documents",
-
-    "REKLAMACE": "CLAIM",
-    "KVALITA": "QUALITY ISSUE",
-    "VADA": "DEFECT",
-    "STÍŽNOST": "COMPLAINT",
-    "STIZNOST": "COMPLAINT",
-    "KOMUNIKACE": "COMMUNICATION",
-    "DODÁNÍ": "DELIVERY ISSUE",
-    "CHOVÁNÍ": "BEHAVIOR",
-    "DOKLADY": "DOCUMENTS"
-  };
-
-  function t(key, fallback) {
-    const dict = UI_ENGLISH ? I18N_UI_EN : I18N_UI_CZ;
-    return (key && Object.prototype.hasOwnProperty.call(dict, key)) ? dict[key] : (fallback ?? key);
+    noOrders: "No orders."
+  },
+  de: {
+    quarterly: "Quartalsbewertung",
+    period: "Zeitraum",
+    rating: "Gesamtbewertung",
+    turnover: "Umsatz",
+    orders: "Bestellungen",
+    delayed: "Verspätet",
+    detail: "Detailübersicht",
+    issued: "Ausgestellt",
+    order: "Bestellung",
+    price: "Preis",
+    status: "Status",
+    note: "Notiz / Problem",
+    internal: "Interner Lieferantenbewertungsbericht",
+    printed: "Gedruckt",
+    days: "Tage",
+    noOrders: "Keine Bestellungen."
   }
+};
 
-  function applyI18N(rootEl) {
-    const root = rootEl || document;
-    root.querySelectorAll("[data-i18n]").forEach(el => {
-      const key = el.getAttribute("data-i18n");
-      if (!key) return;
-      el.innerText = t(key, el.innerText);
+const STATUS = {
+  "Opožděno": { en:"Delayed", de:"Verspätet" },
+  "Doručeno": { en:"Delivered", de:"Geliefert" }
+};
+
+function t(k){ return UI[UI_LANG][k] || k; }
+
+function trStatus(s){
+  if(UI_LANG==="cz") return s;
+  return STATUS[s]?.[UI_LANG] || s;
+}
+
+function trProblem(text){
+  if(UI_LANG==="cz") return text;
+  return text.replace(/Zpoždění (\d+) dnů/i, (_,d)=>`Delay ${d} ${t("days")}`);
+}
+
+/* ================= RENDER ================= */
+
+function render(record){
+  LAST_RECORD = record;
+  const raw = record?.Tiskova_Data;
+  if(!raw) return;
+
+  const data = JSON.parse(raw);
+  const h = data.hlavicka;
+
+  let html = `
+    <div class="header">
+      <div>
+        <img src="https://www.streicher.cz/fileadmin/Vorlage/images/logo.png" class="logo-img">
+        <h1>${h.dodavatel}</h1>
+        <div>${t("quarterly")}</div>
+      </div>
+      <div>${t("period")}: ${h.obdobi}</div>
+    </div>
+
+    <div class="dashboard">
+      <div class="score">
+        <div class="score-val">${h.skore_procenta} %</div>
+        <div class="score-lbl">${t("rating")}</div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><b>${h.obrat}</b><br>${t("turnover")}</div>
+        <div class="kpi"><b>${h.pocet_celkem}</b><br>${t("orders")}</div>
+        <div class="kpi"><b>${h.pocet_zpozdenych}</b><br>${t("delayed")}</div>
+      </div>
+    </div>
+
+    <h3>${t("detail")}</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>${t("issued")}</th>
+          <th>${t("order")}</th>
+          <th>${t("price")}</th>
+          <th>${t("status")}</th>
+          <th>${t("note")}</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  if(data.radky.length){
+    data.radky.forEach(r=>{
+      html+=`
+        <tr>
+          <td>${r.datum}</td>
+          <td>${r.cislo}</td>
+          <td style="text-align:right">${r.cena}</td>
+          <td>${trStatus(r.status)}</td>
+          <td>${r.je_problem ? `<span class="problem-text">${trProblem(r.text_problemu)}</span>` : ""}</td>
+        </tr>`;
     });
+  } else {
+    html+=`<tr><td colspan="5" style="text-align:center">${t("noOrders")}</td></tr>`;
   }
 
-  function trStatus(status) {
-    const s = String(status || "").trim();
-    if (!UI_ENGLISH) return s;
-    return STATUS_TRANSLATIONS[s] || s;
-  }
+  html+=`
+      </tbody>
+    </table>
 
-  function trProblemToken(token) {
-    const s = String(token || "").trim();
-    if (!UI_ENGLISH) return s;
+    <div class="footer">
+      <span>${t("internal")}</span>
+      <span>${t("printed")}: ${new Date().toLocaleDateString()}</span>
+    </div>
+  `;
 
-    if (Object.prototype.hasOwnProperty.call(PROBLEM_TRANSLATIONS, s)) return PROBLEM_TRANSLATIONS[s];
+  document.getElementById("report").innerHTML = html;
+}
 
-    const norm = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    if (Object.prototype.hasOwnProperty.call(PROBLEM_TRANSLATIONS, norm)) return PROBLEM_TRANSLATIONS[norm];
+/* ================= INIT ================= */
 
-    return s;
-  }
+const sel = document.getElementById("langSelect");
+UI_LANG = localStorage.getItem(LS_KEY) || "cz";
+sel.value = UI_LANG;
 
-  function trProblemText(text) {
-    const s = String(text || "").trim();
-    if (!s) return s;
-    if (!UI_ENGLISH) return s;
+sel.addEventListener("change", ()=>{
+  UI_LANG = sel.value;
+  localStorage.setItem(LS_KEY, UI_LANG);
+  if(LAST_RECORD) render(LAST_RECORD);
+});
 
-    const m = s.match(/^Zpoždění\s+(\d+)\s+dnů$/i);
-    if (m) return `Delay ${m[1]} days`;
-
-    if (s.includes(",")) {
-      return s.split(",").map(part => {
-        const p = part.trim();
-        const dm = p.match(/^Zpoždění\s+(\d+)\s+dnů$/i);
-        if (dm) return `Delay ${dm[1]} days`;
-        return trProblemToken(p);
-      }).join(", ");
-    }
-
-    const token = trProblemToken(s);
-    if (token !== s) return token;
-
-    return s;
-  }
-
-  function loadLangFromLocalStorage() {
-    try {
-      UI_ENGLISH = localStorage.getItem(LS_KEY) === "1";
-    } catch (e) {
-      UI_ENGLISH = false;
-    }
-    const cb = document.getElementById("langToggle");
-    if (cb) cb.checked = UI_ENGLISH;
-  }
-
-  function saveLangToLocalStorage() {
-    try {
-      localStorage.setItem(LS_KEY, UI_ENGLISH ? "1" : "0");
-    } catch (e) {}
-  }
-
-  function bindLangToggle() {
-    const cb = document.getElementById("langToggle");
-    if (!cb) return;
-    cb.addEventListener("change", () => {
-      UI_ENGLISH = cb.checked;
-      saveLangToLocalStorage();
-      if (LAST_RECORD) renderRecord(LAST_RECORD);
-      applyI18N(document);
-    });
-  }
-
-  function renderRecord(record) {
-    const container = document.getElementById('report');
-    LAST_RECORD = record;
-
-    const rawData = record && record.Tiskova_Data;
-
-    if (!rawData) {
-      container.innerHTML = `<div style="text-align:center; padding-top:50px;">${t("emptyInput","Žádná data (prázdný vstup).")}</div>`;
-      return;
-    }
-
-    let data;
-    try {
-      data = JSON.parse(rawData);
-    } catch (e) {
-      container.innerHTML = `<div style="color:red; text-align:center; padding:50px;">${t("dataError","CHYBA DAT")}:<br>${rawData}</div>`;
-      return;
-    }
-
-    if (data.error) {
-      container.innerHTML = `<div style="color:red; text-align:center; padding:50px;">${t("pythonError","CHYBA PYTHONU")}:<br>${data.error}</div>`;
-      return;
-    }
-
-    const h = data.hlavicka;
-
-    let trendHtml = '';
-    if (h.trend_label) {
-      let val = h.trend_val;
-      let arrow = '➡';
-      let cls = 't-neut';
-      let sign = '';
-      if (val > 0.1) { arrow = '↗'; cls = 't-up'; sign = '+'; }
-      else if (val < -0.1) { arrow = '↘'; cls = 't-down'; sign = ''; }
-      trendHtml = `<div class="trend-box ${cls}">${arrow} ${sign}${val.toFixed(1)} % <span style="color:#000; font-weight:normal; margin-left:3px;">${h.trend_label}</span></div>`;
-    }
-
-    let html = `
-      <div class="header">
-        <div>
-          <img src="https://www.streicher.cz/fileadmin/Vorlage/images/logo.png" alt="Logo" class="logo-img">
-          <h1>${h.dodavatel}</h1>
-          <div style="font-size:12px; text-transform:uppercase; color:#444;" data-i18n="quarterlyEvaluation">Kvartální vyhodnocení</div>
-        </div>
-        <div class="meta-date">
-          <span data-i18n="period">Období</span>: ${h.obdobi}
-        </div>
-      </div>
-
-      <div class="dashboard-container">
-        <div class="score-section">
-          <span class="score-val">${h.skore_procenta} %</span>
-          <span class="score-lbl" data-i18n="overallRating">Celkové hodnocení</span>
-          ${trendHtml}
-        </div>
-
-        <div class="kpi-section">
-          <div class="kpi-box">
-            <span class="kpi-num" style="white-space: nowrap;">${h.obrat}</span>
-            <span class="kpi-lbl" data-i18n="turnover">Obrat</span>
-          </div>
-          <div class="kpi-box">
-            <span class="kpi-num">${h.pocet_celkem}</span>
-            <span class="kpi-lbl" data-i18n="orders">Objednávek</span>
-          </div>
-          <div class="kpi-box">
-            <span class="kpi-num">${h.pocet_zpozdenych}</span>
-            <span class="kpi-lbl" data-i18n="delayed">Opožděných</span>
-          </div>
-        </div>
-      </div>
-
-      <h3 style="font-size:14px; text-transform:uppercase; border-bottom:1px solid #ccc; margin-bottom:5px;" data-i18n="detailOverview">Detailní přehled</h3>
-      <table>
-        <thead>
-          <tr>
-            <th style="width: 12%" data-i18n="issued">Vystaveno</th>
-            <th style="width: 15%" data-i18n="order">Objednávka</th>
-            <th style="width: 18%; text-align: right;" data-i18n="price">Cena</th>
-            <th style="width: 15%; padding-left: 10px;" data-i18n="status">Status</th>
-            <th style="width: 40%" data-i18n="noteProblem">Poznámka / Problém</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-
-    if (data.radky && data.radky.length > 0) {
-      data.radky.forEach(r => {
-        const probContent = r.je_problem ? `<span class="problem-text">${trProblemText(r.text_problemu)}</span>` : '';
-        html += `
-          <tr>
-            <td>${r.datum}</td>
-            <td>${r.cislo}</td>
-            <td style="text-align: right;">${r.cena}</td>
-            <td style="padding-left: 10px;">${trStatus(r.status)}</td>
-            <td>${probContent}</td>
-          </tr>
-        `;
-      });
-    } else {
-      html += `<tr><td colspan="5" style="text-align:center; padding: 20px;">${t("noOrders","Žádné objednávky.")}</td></tr>`;
-    }
-
-    html += `
-        </tbody>
-      </table>
-
-      <div class="footer">
-        <span data-i18n="internalReport">Interní report hodnocení dodavatelů</span>
-        <span><span data-i18n="printed">Vytištěno</span>: ${new Date().toLocaleDateString(UI_ENGLISH ? 'en-US' : 'cs-CZ')}</span>
-      </div>
-    `;
-
-    container.innerHTML = html;
-    applyI18N(container);
-  }
-
-  // Grist wiring
-  grist.ready({
-    columns: ['Tiskova_Data'],
-    requiredAccess: 'read table'
-  });
-
-  // Init UI language from localStorage, bind toggle
-  loadLangFromLocalStorage();
-  bindLangToggle();
-  applyI18N(document);
-
-  grist.onRecord(function(record) {
-    renderRecord(record);
-  });
+grist.ready({ columns:["Tiskova_Data"], requiredAccess:"read table" });
+grist.onRecord(render);
 </script>
 
 </body>
