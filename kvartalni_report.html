@@ -80,9 +80,29 @@
     
     .btn-print { display: block; width: 200px; margin: 0 auto 20px auto; padding: 10px; background: #333; color: white; text-align: center; cursor: pointer; border-radius: 5px; font-weight: bold; }
     .btn-print:hover { background: #000; }
+
+    /* Language toggle bar (screen only) */
+    .langbar {
+      max-width: 210mm;
+      margin: 0 auto 10px auto;
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      align-items: center;
+      font-weight: bold;
+    }
+    .langbar input { transform: translateY(1px); }
   </style>
 </head>
 <body>
+
+  <!-- Language toggle (works even in summary tables) -->
+  <div class="no-print langbar">
+    <label style="display:flex; gap:8px; align-items:center;">
+      <input type="checkbox" id="langToggle">
+      English
+    </label>
+  </div>
 
   <div class="no-print btn-print" onclick="window.print()" data-i18n="printReport">🖨️ Vytisknout Report</div>
 
@@ -92,16 +112,10 @@
 
 <script>
   // ---------------------------
-  // I18N (CZ <-> EN) driven by Grist toggle
+  // I18N (CZ <-> EN) driven by widget option toggle (works in summary table)
   // ---------------------------
   let UI_ENGLISH = false;
-
-  function toBool(v) {
-    if (v === true || v === 1) return true;
-    if (v === false || v === 0 || v == null) return false;
-    if (typeof v === "string") return v.toLowerCase() === "true";
-    return false;
-  }
+  let LAST_RECORD = null;
 
   const I18N_UI_CZ = {
     printReport: "🖨️ Vytisknout Report",
@@ -124,11 +138,7 @@
     noOrders: "Žádné objednávky.",
     internalReport: "Interní report hodnocení dodavatelů",
     printed: "Vytištěno",
-    totalDelayedOrders: "Celkem {n} zpožděných objednávek",
-    outOfTotal: "(Z celkového počtu {n} objednávek)",
-    averageDelay: "Průměrné zpoždění: {n} dnů",
     days: "dnů",
-    vs: "vs",
     noChange: "beze změny"
   };
 
@@ -153,21 +163,17 @@
     noOrders: "No orders.",
     internalReport: "Internal supplier evaluation report",
     printed: "Printed",
-    totalDelayedOrders: "Total {n} delayed orders",
-    outOfTotal: "(Out of {n} total orders)",
-    averageDelay: "Average delay: {n} days",
     days: "days",
-    vs: "vs",
     noChange: "no change"
   };
 
-  // Status translations (CZ -> EN). Keep passthrough if already EN.
+  // Status translations (CZ -> EN)
   const STATUS_TRANSLATIONS = {
     "Opožděno": "Delayed",
     "Doručeno": "Delivered"
   };
 
-  // Problem-type translations (same base as in previous widget, plus uppercase variants)
+  // Problem-type translations (CZ -> EN, incl. uppercase variants)
   const PROBLEM_TRANSLATIONS = {
     "Reklamace": "Claim",
     "Kvalita": "Quality Issue",
@@ -204,10 +210,6 @@
     });
   }
 
-  function formatTemplate(str, params) {
-    return String(str).replace(/\{(\w+)\}/g, (_, k) => (params && params[k] != null ? params[k] : `{${k}}`));
-  }
-
   function trStatus(status) {
     const s = String(status || "").trim();
     if (!UI_ENGLISH) return s;
@@ -220,29 +222,26 @@
 
     if (Object.prototype.hasOwnProperty.call(PROBLEM_TRANSLATIONS, s)) return PROBLEM_TRANSLATIONS[s];
 
-    // try without diacritics
     const norm = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     if (Object.prototype.hasOwnProperty.call(PROBLEM_TRANSLATIONS, norm)) return PROBLEM_TRANSLATIONS[norm];
 
     return s;
   }
 
-  // Translates "Zpoždění X dnů" -> "Delay X days" (only in EN mode).
+  // Translates:
+  // - "Zpoždění X dnů" -> "Delay X days"
+  // - known tokens like "REKLAMACE" -> "CLAIM"
   // Leaves free text untouched.
   function trProblemText(text) {
     const s = String(text || "").trim();
     if (!s) return s;
     if (!UI_ENGLISH) return s;
 
-    // 1) Delay pattern
+    // exact delay pattern
     const m = s.match(/^Zpoždění\s+(\d+)\s+dnů$/i);
     if (m) return `Delay ${m[1]} days`;
 
-    // 2) If it's a known uppercase token ("REKLAMACE", ...)
-    const token = trProblemToken(s);
-    if (token !== s) return token;
-
-    // 3) If it's a comma-separated list, translate known parts only
+    // comma-separated list
     if (s.includes(",")) {
       return s.split(",").map(part => {
         const p = part.trim();
@@ -252,21 +251,39 @@
       }).join(", ");
     }
 
-    // 4) Otherwise: free text (Detail_Problemu) -> keep
+    // single token translation
+    const token = trProblemToken(s);
+    if (token !== s) return token;
+
     return s;
   }
 
-  grist.ready({
-    columns: ['Tiskova_Data', 'Tisk_Anglicky'],
-    requiredAccess: 'read table'
-  });
+  async function loadLangOption() {
+    try {
+      const opt = await grist.getOption("lang_en");
+      UI_ENGLISH = !!opt;
+    } catch (e) {
+      UI_ENGLISH = false;
+    }
+    const cb = document.getElementById("langToggle");
+    if (cb) cb.checked = UI_ENGLISH;
+  }
 
-  grist.onRecord(function(record) {
+  function bindLangToggle() {
+    const cb = document.getElementById("langToggle");
+    if (!cb) return;
+    cb.addEventListener("change", async () => {
+      UI_ENGLISH = cb.checked;
+      try { await grist.setOption("lang_en", UI_ENGLISH); } catch (e) {}
+      if (LAST_RECORD) renderRecord(LAST_RECORD);
+    });
+  }
+
+  function renderRecord(record) {
     const container = document.getElementById('report');
-    const rawData = record.Tiskova_Data;
+    LAST_RECORD = record;
 
-    // Set language from toggle (single source of truth)
-    UI_ENGLISH = toBool(record.Tisk_Anglicky);
+    const rawData = record && record.Tiskova_Data;
 
     if (!rawData) {
       container.innerHTML = `<div style="text-align:center; padding-top:50px;">${t("emptyInput","Žádná data (prázdný vstup).")}</div>`;
@@ -297,6 +314,7 @@
         if (val > 0.1) { arrow = '↗'; cls = 't-up'; sign = '+'; }
         else if (val < -0.1) { arrow = '↘'; cls = 't-down'; sign = ''; }
         
+        // trend_label is free text => do not translate
         trendHtml = `<div class="trend-box ${cls}">${arrow} ${sign}${val.toFixed(1)} % <span style="color:#000; font-weight:normal; margin-left:3px;">${h.trend_label}</span></div>`;
     }
 
@@ -377,9 +395,23 @@
     `;
 
     container.innerHTML = html;
-
-    // Apply translation keys inside generated HTML
     applyI18N(container);
+  }
+
+  grist.ready({
+    columns: ['Tiskova_Data'],
+    requiredAccess: 'read table'
+  });
+
+  // Init: load saved language option, bind toggle, then wait for records
+  loadLangOption().then(() => {
+    bindLangToggle();
+    applyI18N(document);
+  });
+
+  grist.onRecord(function(record) {
+    // render using current UI_ENGLISH (from widget option)
+    renderRecord(record);
   });
 </script>
 
